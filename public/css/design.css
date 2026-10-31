@@ -1,0 +1,691 @@
+
+/* ==========================================================
+   ALBA LARAVEL - SHARED SAKURA THEME
+   Pages: Members List, Create, Edit, Profile, Task Manager
+   Load AFTER Bootstrap on the Task Manager page.
+   ========================================================== */
+
+/* 01. THEME VARIABLES AND GLOBAL STYLES */
+
+:root {
+    --page-bg: #f5f3ff;
+    --surface: #ffffff;
+    --ink: #24213d;
+    --heading: #30245c;
+    --muted: #69617c;
+    --purple: #8b6cf0;
+    --purple-hover: #7657d6;
+    --lavender: #eee8ff;
+    --border: #ded5fa;
+    --line: #e8e1f5;
+    --navy: #202c66;
+    --success: #168a69;
+    --warning: #bc812b;
+    --danger: #c74366;
+    --slate: #495778;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--page-bg);
+    color: var(--ink);
+    line-height: 1.5;
+}
+
+/* 02. HEADERS AND NAVIGATION */
+
+header,
+.task-header {
+    position: relative;
+    padding: 45px 20px;
+    text-align: center;
+    color: #ffffff;
+    background: linear-gradient(
+        135deg,
+        #202c66 0%,
+        #5740a0 55%,
+        #8966d9 100%
+    );
+    border-bottom: 3px solid #a98aff;
+    overflow: hidden;
+}
+
+header::before,
+.task-header::before {
+    content: '✦  ✧  ✦  ✧  ✦';
+    position: absolute;
+    top: 15px;
+    right: 24px;
+    color: #e6be75;
+    opacity: 0.7;
+    letter-spacing: 9px;
+    pointer-events: none;
+}
+
+header h1,
+.task-header h1 {
+    margin: 0 0 12px;
+    color: #ffffff;
+    font-size: clamp(30px, 4vw, 46px);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.18);
+}
+
+header p,
+.task-header p {
+    margin: 0 0 12px;
+    color: #f1eaff;
+}
+
+header a,
+.task-navigation {
+    display: inline-block;
+    color: #ffe0f5;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+header a:hover,
+.task-navigation:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* 03. CONTAINERS AND CARDS */
+
+.container {
+    width: 100%;
+    max-width: 1150px;
+    margin: 38px auto;
+    padding: 0 20px;
+}
+
+.members-container {
+    max-width: 1400px;
+    padding: 0 24px;
+}
+
+.profile-container,
+.member-form-container {
+    width: 100%;
+    max-width: 750px;
+    margin: 35px auto;
+    padding: 0 20px;
+}
+
+.card {
+    background: var(--surface);
+    color: var(--ink);
+    padding: 30px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(78, 52, 140, 0.12);
+    margin-bottom: 24px;
+}
+
+.card h1,
+.card h2,
+.card h3,
+.card h4 {
+    color: var(--heading);
+}
+
+.card h2 {
+    margin-top: 0;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.members-container .card {
+    width: 100%;
+    padding: 32px;
+}
+
+/* 04. FORMS AND VALIDATION */
+
+label,
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #45366f;
+    font-weight: 600;
+}
+
+input,
+select,
+textarea,
+.task-container .form-control {
+    background: #ffffff;
+    color: var(--ink);
+    border: 1px solid #d8d1ea;
+    border-radius: 9px;
+    padding: 12px 14px;
+    font: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #77718b;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.task-container .form-control:focus {
+    outline: none;
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(139, 108, 240, 0.20);
+}
+
+input[readonly] {
+    background: #f1eff8;
+    color: #665d7c;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.member-form-container input,
+.member-form-container select {
+    display: block;
+    width: 100%;
+    font-size: 15px;
+}
+
+.member-form-actions,
+.profile-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.profile-actions {
+    margin-top: 20px;
+}
+
+.profile-actions .btn {
+    margin-top: 0;
+}
+
+.error {
+    margin-top: 5px;
+    color: #c42f52;
+    font-size: 13px;
+}
+
+.error-box {
+    margin-bottom: 20px;
+    padding: 14px;
+    border-radius: 10px;
+    background: #ffe4e9;
+    color: #922a45;
+}
+
+.success {
+    margin-bottom: 20px;
+    padding: 14px;
+    border: 1px solid #a4d9c2;
+    border-radius: 10px;
+    background: #d9f2e8;
+    color: #12634a;
+}
+
+/* 05. BUTTONS */
+
+.btn,
+button[type='submit'] {
+    display: inline-block;
+    padding: 11px 17px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: var(--purple);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+.btn:hover,
+button[type='submit']:hover {
+    background: var(--purple-hover);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 16px rgba(139, 108, 240, 0.20);
+}
+
+.btn-green {
+    background: #168a69;
+}
+
+.btn-green:hover {
+    background: #20a780;
+}
+
+.btn-orange {
+    background: #bc812b;
+}
+
+.btn-orange:hover {
+    background: #d79a3e;
+}
+
+.btn-red {
+    background: #c74366;
+}
+
+.btn-red:hover {
+    background: #e45b7b;
+}
+
+.btn-gray {
+    background: #495778;
+}
+
+.btn-gray:hover {
+    background: #637295;
+}
+
+.btn:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 3px solid #b5a0fa;
+    outline-offset: 2px;
+}
+
+/* 06. MEMBER LIST, SEARCH, TABLE AND PAGINATION */
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 25px;
+}
+
+.toolbar form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.toolbar input {
+    min-width: 250px;
+}
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #53639b;
+    border-radius: 12px;
+}
+
+.members-container table {
+    width: 100%;
+    min-width: 900px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--ink);
+}
+
+th,
+td {
+    padding: 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+}
+
+th {
+    background: var(--lavender);
+    color: var(--heading);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: #f7f2ff;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.actions form {
+    display: inline;
+    margin: 0;
+}
+
+.actions .btn {
+    white-space: nowrap;
+}
+
+.empty-table {
+    padding: 25px;
+    text-align: center;
+    color: #77708d;
+}
+
+.pagination {
+    margin-top: 20px;
+    color: #45366f;
+}
+
+.pagination nav {
+    color: #45366f;
+}
+
+.pagination a,
+.pagination span {
+    color: #45366f;
+}
+
+/* 07. MEMBER PROFILE */
+
+.profile-container .detail {
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.detail strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #6549aa;
+}
+
+.detail span {
+    color: var(--ink);
+}
+
+.profile-container .detail span {
+    font-size: 16px;
+}
+
+/* 08. TASK MANAGER AND BOOTSTRAP INTEGRATION */
+
+.task-page {
+    background: var(--page-bg);
+    color: var(--ink);
+}
+
+.task-container {
+    max-width: 900px;
+    margin: 35px auto;
+    padding: 0 20px;
+}
+
+.task-container .card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(78, 52, 140, 0.10);
+}
+
+.task-container .card h4 {
+    color: var(--heading);
+}
+
+.task-container .form-control {
+    display: block;
+    width: 100%;
+}
+
+.task-container .btn-primary {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: #ffffff;
+}
+
+.task-container .btn-primary:hover {
+    background: var(--purple-hover);
+    border-color: var(--purple-hover);
+}
+
+/* 09. ANIME QUEST JOURNAL */
+
+.quest-journal {
+    padding: 30px !important;
+}
+
+.quest-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.quest-heading h4 {
+    margin: 0;
+    color: var(--heading);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.quest-subtitle {
+    margin: 5px 0 0;
+    color: #77708d;
+    font-size: 14px;
+}
+
+.quest-counter {
+    padding: 8px 15px;
+    border-radius: 20px;
+    background: var(--lavender);
+    color: #6549aa;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.quest-list {
+    display: grid;
+    gap: 18px;
+}
+
+.quest-card {
+    position: relative;
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--purple);
+    border-radius: 14px;
+    background: linear-gradient(
+        135deg,
+        #ffffff,
+        #faf7ff
+    );
+    box-shadow: 0 4px 12px rgba(88, 65, 150, 0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.quest-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(139, 108, 240, 0.15);
+}
+
+.quest-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.quest-card-header h3 {
+    margin: 0;
+    color: var(--heading);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.quest-card-header h3::before {
+    content: '✦ ';
+    color: var(--purple);
+}
+
+.quest-description,
+.quest-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.quest-status {
+    display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #f1d88b;
+    border-radius: 20px;
+    background: #fff0c2;
+    color: #885b00;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.quest-status.completed {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.quest-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid #eee8fa;
+}
+
+.quest-label {
+    color: var(--purple);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.quest-empty {
+    padding: 40px 20px;
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    background: #faf7ff;
+    text-align: center;
+}
+
+.quest-empty h3 {
+    color: #6549aa;
+}
+
+.quest-empty p {
+    color: #77708d;
+}
+
+/* 10. RESPONSIVE DESIGN */
+
+@media (max-width: 768px) {
+    header,
+    .task-header {
+        padding: 35px 15px;
+    }
+
+    header::before,
+    .task-header::before {
+        letter-spacing: 4px;
+        right: 12px;
+    }
+
+    .container,
+    .members-container,
+    .task-container,
+    .profile-container,
+    .member-form-container {
+        margin: 20px auto;
+        padding: 0 12px;
+    }
+
+    .card,
+    .members-container .card {
+        padding: 20px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .toolbar form {
+        width: 100%;
+    }
+
+    .toolbar input {
+        min-width: 0;
+        flex: 1;
+    }
+
+    th,
+    td {
+        padding: 10px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 600px) {
+    .quest-journal {
+        padding: 20px !important;
+    }
+
+    .quest-card {
+        padding: 16px;
+    }
+
+    .quest-card-header {
+        align-items: flex-start;
+    }
+
+    .member-form-actions,
+    .profile-actions {
+        gap: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    button[type='submit'],
+    .quest-card {
+        transition: none;
+    }
+}
