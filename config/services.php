@@ -14,6 +14,8 @@ return [
     |
     */
 
+    
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
@@ -34,5 +36,15 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+
+
+'google_maps' => [
+    'key' => env('GOOGLE_MAPS_KEY'),
+],
+
+'openweather' => [
+    'key' => env('OPENWEATHER_KEY'),
+],
+
 
 ];
