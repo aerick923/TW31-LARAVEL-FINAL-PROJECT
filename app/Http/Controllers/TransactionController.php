@@ -141,50 +141,99 @@ public function store(Request $request)
     }
 
     // Approve a fully paid transaction
-    public function approve(MembershipTransaction $transaction)
-    {
-        return DB::transaction(function () use ($transaction) {
-            $transaction = MembershipTransaction::whereKey($transaction->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+    
+public function approve(MembershipTransaction $transaction)
+{
+    return DB::transaction(function () use ($transaction) {
 
-            if ($transaction->status !== 'Paid') {
+        // Lock the transaction to prevent simultaneous approval.
+        $transaction = MembershipTransaction::whereKey($transaction->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        // Only paid transactions can be approved.
+        if ($transaction->status !== 'Paid') {
+            return back()->with(
+                'error',
+                'Only paid transactions can be approved.'
+            );
+        }
+
+        // Confirm that the full amount has been paid.
+        $totalPaid = $transaction->payments()->sum('amount');
+
+        if (round((float) $totalPaid, 2) <
+            round((float) $transaction->amount, 2)) {
+            return back()->with(
+                'error',
+                'The transaction has not been fully paid.'
+            );
+        }
+
+        // Retrieve the member's membership level.
+        $member = $transaction->member;
+
+        $level = MembershipLevel::where('name', $member->level)
+            ->firstOrFail();
+
+        $validityMonths = $level->validity_months;
+
+        if (!$validityMonths || $validityMonths < 1) {
+            return back()->with(
+                'error',
+                'The membership level has no valid duration.'
+            );
+        }
+
+        // Default: membership begins on approval date.
+        $startDate = now()->startOfDay();
+
+        if ($transaction->transaction_type === 'Renewal') {
+
+            // Find the latest approved membership expiration.
+            $previousTransaction = $member->membershipTransactions()
+                ->where('status', 'Approved')
+                ->where('id', '!=', $transaction->id)
+                ->whereNotNull('end_date')
+                ->orderByDesc('end_date')
+                ->first();
+
+            if (!$previousTransaction) {
                 return back()->with(
                     'error',
-                    'Only paid transactions can be approved.'
+                    'No approved membership found for renewal.'
                 );
             }
 
-            $totalPaid = $transaction->payments()->sum('amount');
-
-            if ($totalPaid < $transaction->amount) {
-                return back()->with(
-                    'error',
-                    'The transaction has not been fully paid.'
-                );
+            // If membership is still valid, extend from expiration.
+            if ($previousTransaction->end_date->gte($startDate)) {
+                $startDate = $previousTransaction->end_date
+                    ->copy()
+                    ->addDay();
             }
+        }
 
-            $level = MembershipLevel::where(
-                'name',
-                $transaction->member->level
-            )->firstOrFail();
+        // The final day of the membership period is inclusive.
+        $endDate = $startDate->copy()
+            ->addMonthsNoOverflow((int) $validityMonths)
+            ->subDay();
 
-            $validityMonths = $level->validity_months ?? 12;
+        // Approve transaction and save membership validity.
+        $transaction->update([
+            'status' => 'Approved',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
 
-            $startDate = now();
-            $endDate = now()->addMonthsNoOverflow($validityMonths);
+        return redirect()
+            ->route('transactions.show', $transaction)
+            ->with(
+                'success',
+                'Transaction approved successfully!'
+            );
+    });
+}
 
-            $transaction->update([
-                'status' => 'Approved',
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]);
-
-            return redirect()
-                ->route('transactions.show', $transaction)
-                ->with('success', 'Transaction approved successfully!');
-        });
-    }
 
     // Cancel a pending transaction
     public function cancel(MembershipTransaction $transaction)

@@ -8,6 +8,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MembershipApplicationController;
 use App\Http\Controllers\WeatherController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\PaymentController;
 
 // Home page
 Route::get('/', function () {
@@ -84,3 +85,18 @@ Route::patch(
     '/transactions/{transaction}/cancel',
     [TransactionController::class, 'cancel']
 )->name('transactions.cancel');
+
+// Payment Processing System
+
+// Show payment recording form
+Route::get(
+    '/transactions/{transaction}/payments/create',
+    [PaymentController::class, 'create']
+)->name('payments.create');
+
+// Record a payment for a transaction
+Route::post(
+    '/transactions/{transaction}/payments',
+    [PaymentController::class, 'store']
+)->name('payments.store');
+
