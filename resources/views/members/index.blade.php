@@ -32,6 +32,14 @@
             </div>
         @endif
 
+
+@if(session('error'))
+    <div class="error-box" role="alert">
+        {{ session('error') }}
+    </div>
+@endif
+
+
         <div class="toolbar">
 
             <form action="{{ route('members.index') }}" method="GET">

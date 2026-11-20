@@ -26,4 +26,12 @@ public function membershipLevel()
     );
 }
 
+
+    // A member can have multiple membership transactions.
+    public function membershipTransactions()
+    {
+        return $this->hasMany(MembershipTransaction::class);
+    }
+
+
 }

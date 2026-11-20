@@ -119,13 +119,21 @@ public function edit(Member $member)
     }
 
     // Permanently delete a member
+    
+    // Permanently delete a member only if they have no transactions.
     public function destroy(Member $member)
     {
+        if ($member->membershipTransactions()->exists()) {
+            return redirect()->route('members.index')
+                ->with('error', 'This member has transaction history and cannot be deleted. Please deactivate the member instead.');
+        }
+
         $member->delete();
 
         return redirect()->route('members.index')
             ->with('success', 'Member deleted successfully!');
     }
+
 
     // Deactivate or reactivate a member
     public function toggleStatus(Member $member)
