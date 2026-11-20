@@ -9,6 +9,8 @@ use App\Http\Controllers\MembershipApplicationController;
 use App\Http\Controllers\WeatherController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AuthController;
+
 
 // Home page
 Route::get('/', function () {
@@ -100,3 +102,20 @@ Route::post(
     [PaymentController::class, 'store']
 )->name('payments.store');
 
+
+// Administrator Authentication
+
+// Display login page
+Route::get('/login', [AuthController::class, 'showLogin'])
+    ->middleware('guest')
+    ->name('login');
+
+// Process login credentials
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware(['guest', 'throttle:5,1'])
+    ->name('login.submit');
+
+// Log out authenticated administrator
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
