@@ -14,6 +14,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\RegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,23 @@ Route::get('/weather', [WeatherController::class, 'show'])
 | ADMINISTRATOR AUTHENTICATION
 |--------------------------------------------------------------------------
 */
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC USER REGISTRATION
+|--------------------------------------------------------------------------
+*/
+
+// Display the registration page.
+Route::get('/register', [RegisterController::class, 'showRegistration'])
+    ->middleware('guest')
+    ->name('register');
+
+// Process user registration.
+Route::post('/register', [RegisterController::class, 'register'])
+    ->middleware(['guest', 'throttle:5,1'])
+    ->name('register.submit');
+
 
 // Display login page
 Route::get('/login', [AuthController::class, 'showLogin'])
