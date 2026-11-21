@@ -8,13 +8,13 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Display the administrator login page.
+    // Display the login page.
     public function showLogin()
     {
         return view('auth.login');
     }
 
-    // Authenticate the administrator.
+    // Authenticate regular users and administrators.
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -22,26 +22,50 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        
-if (!Auth::attempt([
-    ...$credentials,
-    'role' => 'admin',
-])) {
-    throw ValidationException::withMessages([
-        'email' => 'The provided credentials are incorrect.',
-    ]);
-}
-
+        // Authenticate using the stored account credentials.
+        if (!Auth::attempt($credentials)) {
+            throw ValidationException::withMessages([
+                'email' => 'The provided credentials are incorrect.',
+            ]);
+        }
 
         // Prevent session fixation.
         $request->session()->regenerate();
 
-        return redirect()
-            ->intended(route('transactions.index'))
-            ->with('success', 'Logged in successfully!');
+        $user = Auth::user();
+
+        // Administrators go to the administrator dashboard.
+        if ($user->role === 'admin') {
+            return redirect()
+                ->route('dashboard.index')
+                ->with('success', 'Administrator login successful!');
+        }
+
+        // Regular users must verify their email first.
+        if ($user->role === 'user') {
+
+            if (!$user->hasVerifiedEmail()) {
+                return redirect()
+                    ->route('verification.notice');
+            }
+
+            return redirect()
+                ->route('user.dashboard')
+                ->with('success', 'Logged in successfully!');
+        }
+
+        // Reject accounts with unexpected roles.
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        throw ValidationException::withMessages([
+            'email' => 'This account does not have a valid role.',
+        ]);
     }
 
-    // Log out the administrator.
+    // Securely log out the authenticated account.
     public function logout(Request $request)
     {
         Auth::logout();

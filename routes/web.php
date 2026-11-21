@@ -2,6 +2,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\MemberController;
@@ -15,10 +16,11 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\EmailVerificationController;
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC ROUTES
+| 1. PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
 
@@ -55,50 +57,132 @@ Route::get('/weather', [WeatherController::class, 'show'])
     ->middleware('throttle:60,1')
     ->name('weather.show');
 
-/*
-|--------------------------------------------------------------------------
-| ADMINISTRATOR AUTHENTICATION
-|--------------------------------------------------------------------------
-*/
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC USER REGISTRATION
+| 2. USER REGISTRATION
 |--------------------------------------------------------------------------
 */
 
-// Display the registration page.
-Route::get('/register', [RegisterController::class, 'showRegistration'])
+// Display registration page
+Route::get(
+    '/register',
+    [RegisterController::class, 'showRegistration']
+)
     ->middleware('guest')
     ->name('register');
 
-// Process user registration.
-Route::post('/register', [RegisterController::class, 'register'])
+// Process registration
+Route::post(
+    '/register',
+    [RegisterController::class, 'register']
+)
     ->middleware(['guest', 'throttle:5,1'])
     ->name('register.submit');
 
 
+/*
+|--------------------------------------------------------------------------
+| 3. USER AND ADMINISTRATOR AUTHENTICATION
+|--------------------------------------------------------------------------
+*/
+
 // Display login page
-Route::get('/login', [AuthController::class, 'showLogin'])
+Route::get(
+    '/login',
+    [AuthController::class, 'showLogin']
+)
     ->middleware('guest')
     ->name('login');
 
-// Process login credentials
-Route::post('/login', [AuthController::class, 'login'])
+// Process login
+Route::post(
+    '/login',
+    [AuthController::class, 'login']
+)
     ->middleware(['guest', 'throttle:5,1'])
     ->name('login.submit');
 
-// Log out authenticated administrator
-Route::post('/logout', [AuthController::class, 'logout'])
+// Log out authenticated account
+Route::post(
+    '/logout',
+    [AuthController::class, 'logout']
+)
     ->middleware('auth')
     ->name('logout');
 
+
 /*
 |--------------------------------------------------------------------------
-| PROTECTED ADMINISTRATOR ROUTES
+| 4. EMAIL VERIFICATION
+|--------------------------------------------------------------------------
+*/
+
+// Display verification notice
+Route::get(
+    '/email/verify',
+    [EmailVerificationController::class, 'notice']
+)
+    ->middleware(['auth', 'regular'])
+    ->name('verification.notice');
+
+// Verify signed email link
+Route::get(
+    '/email/verify/{id}/{hash}',
+    [EmailVerificationController::class, 'verify']
+)
+    ->middleware([
+        'auth',
+        'regular',
+        'signed',
+        'throttle:6,1',
+    ])
+    ->name('verification.verify');
+
+// Resend verification email
+Route::post(
+    '/email/verification-notification',
+    [EmailVerificationController::class, 'resend']
+)
+    ->middleware([
+        'auth',
+        'regular',
+        'throttle:6,1',
+    ])
+    ->name('verification.send');
+
+
+/*
+|--------------------------------------------------------------------------
+| 5. PROTECTED REGULAR USER ROUTES
 |--------------------------------------------------------------------------
 |
-| Only authenticated users with the admin role can access these routes.
+| Only authenticated, email-verified regular users
+| can access these pages.
+|
+*/
+
+Route::middleware([
+    'auth',
+    'regular',
+    'verified',
+])->group(function () {
+
+    // User Dashboard
+    Route::get('/user/dashboard', function () {
+        return view('user.dashboard');
+    })->name('user.dashboard');
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| 6. PROTECTED ADMINISTRATOR ROUTES
+|--------------------------------------------------------------------------
+|
+| Only authenticated users with the admin role
+| can access these routes.
 |
 */
 
@@ -106,22 +190,30 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | ADMINISTRATOR DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/dashboard',
+        [DashboardController::class, 'index']
+    )->name('dashboard.index');
+
+
+    /*
+    |--------------------------------------------------------------------------
     | MEMBER MANAGEMENT
     |--------------------------------------------------------------------------
     */
 
+    // Member CRUD
+    Route::resource('members', MemberController::class);
 
-    // Printable Membership Transaction Receipt
-    Route::get(
-        '/transactions/{transaction}/receipt',
-        [ReceiptController::class, 'show']
-    )->name('transactions.receipt');
-
-
-    // Administrator Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard.index');
-
+    // Activate or deactivate member
+    Route::patch(
+        '/members/{member}/toggle-status',
+        [MemberController::class, 'toggleStatus']
+    )->name('members.toggleStatus');
 
 
     /*
@@ -133,6 +225,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('categories', CategoryController::class)
         ->except(['show']);
 
+
     /*
     |--------------------------------------------------------------------------
     | MEMBERSHIP LEVEL MANAGEMENT
@@ -143,19 +236,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->except(['show']);
 
 
-
-    // Member CRUD
-    Route::resource('members', MemberController::class);
-
-    // Activate or deactivate member
-    Route::patch(
-        '/members/{member}/toggle-status',
-        [MemberController::class, 'toggleStatus']
-    )->name('members.toggleStatus');
-
     /*
     |--------------------------------------------------------------------------
-    | TRANSACTION PROCESSING SYSTEM
+    | TRANSACTION PROCESSING
     |--------------------------------------------------------------------------
     */
 
@@ -165,19 +248,19 @@ Route::middleware(['auth', 'admin'])->group(function () {
         [TransactionController::class, 'index']
     )->name('transactions.index');
 
-    // Show transaction creation form
+    // Create transaction
     Route::get(
         '/transactions/create',
         [TransactionController::class, 'create']
     )->name('transactions.create');
 
-    // Store new membership or renewal transaction
+    // Store transaction
     Route::post(
         '/transactions',
         [TransactionController::class, 'store']
     )->name('transactions.store');
 
-    // View transaction history for a member
+    // Member transaction history
     Route::get(
         '/members/{member}/transactions',
         [TransactionController::class, 'history']
@@ -189,17 +272,18 @@ Route::middleware(['auth', 'admin'])->group(function () {
         [TransactionController::class, 'show']
     )->name('transactions.show');
 
-    // Approve a fully paid transaction
+    // Approve transaction
     Route::patch(
         '/transactions/{transaction}/approve',
         [TransactionController::class, 'approve']
     )->name('transactions.approve');
 
-    // Cancel a pending transaction
+    // Cancel transaction
     Route::patch(
         '/transactions/{transaction}/cancel',
         [TransactionController::class, 'cancel']
     )->name('transactions.cancel');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -207,7 +291,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    // Show payment recording form
+    // Show payment form
     Route::get(
         '/transactions/{transaction}/payments/create',
         [PaymentController::class, 'create']
@@ -218,5 +302,17 @@ Route::middleware(['auth', 'admin'])->group(function () {
         '/transactions/{transaction}/payments',
         [PaymentController::class, 'store']
     )->name('payments.store');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRINTABLE RECEIPTS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/transactions/{transaction}/receipt',
+        [ReceiptController::class, 'show']
+    )->name('transactions.receipt');
 
 });
