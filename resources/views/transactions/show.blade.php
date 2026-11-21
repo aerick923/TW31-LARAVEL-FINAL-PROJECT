@@ -163,6 +163,15 @@
 
         </div>
 
+
+<a href="{{ route('transactions.receipt', $transaction) }}"
+   class="btn"
+   target="_blank"
+   rel="noopener">
+    Print Receipt
+</a>
+
+
         <a href="{{ route('transactions.index') }}"
            class="btn btn-gray">
             Back to Transactions

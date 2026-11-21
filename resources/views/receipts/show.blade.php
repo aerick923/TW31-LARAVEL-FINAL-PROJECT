@@ -195,7 +195,9 @@
                     <tbody>
                         @forelse($transaction->payments as $payment)
                             <tr>
-                                <td>{{ $payment->reference_number }}</td>
+                                
+<td>{{ $payment->payment_reference }}</td>
+
 
                                 <td>
                                     ₱{{ number_format($payment->amount, 2) }}
