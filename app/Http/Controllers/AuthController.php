@@ -22,11 +22,16 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($credentials)) {
-            throw ValidationException::withMessages([
-                'email' => 'The provided credentials are incorrect.',
-            ]);
-        }
+        
+if (!Auth::attempt([
+    ...$credentials,
+    'role' => 'admin',
+])) {
+    throw ValidationException::withMessages([
+        'email' => 'The provided credentials are incorrect.',
+    ]);
+}
+
 
         // Prevent session fixation.
         $request->session()->regenerate();
