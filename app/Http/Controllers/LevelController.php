@@ -75,13 +75,14 @@ class LevelController extends Controller
     public function update(Request $request, MembershipLevel $level)
     {
         $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('membership_levels', 'name')
-                    ->ignore($level->id),
-            ],
+            
+'name' => [
+    'required',
+    'string',
+    'max:255',
+    Rule::in([$level->name]),
+],
+
             'fee' => [
                 'required',
                 'numeric',
@@ -114,26 +115,45 @@ class LevelController extends Controller
     }
 
     // Prevent deleting levels used by members
-    public function destroy(MembershipLevel $level)
-    {
-        $isUsed = \App\Models\Member::where(
-            'level',
-            $level->name
-        )->exists();
+    
+public function destroy(MembershipLevel $level)
+{
+    $requiredLevels = [
+        'Basic',
+        'Silver',
+        'Gold',
+        'Platinum',
+    ];
 
-        if ($isUsed) {
-            return redirect()
-                ->route('levels.index')
-                ->with(
-                    'error',
-                    'This membership level is assigned to existing members and cannot be deleted.'
-                );
-        }
-
-        $level->delete();
-
+    if (in_array($level->name, $requiredLevels, true)) {
         return redirect()
             ->route('levels.index')
-            ->with('success', 'Membership level deleted successfully!');
+            ->with(
+                'error',
+                'Required membership levels cannot be deleted.'
+            );
     }
+
+    $isUsed = \App\Models\Member::where(
+        'level',
+        $level->name
+    )->exists();
+
+    if ($isUsed) {
+        return redirect()
+            ->route('levels.index')
+            ->with(
+                'error',
+                'This membership level is assigned to existing members and cannot be deleted.'
+            );
+    }
+
+    return redirect()
+        ->route('levels.index')
+        ->with(
+            'error',
+            'Deleting membership levels is disabled to protect existing records.'
+        );
+}
+
 }

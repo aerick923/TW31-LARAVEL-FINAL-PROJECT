@@ -84,19 +84,7 @@
                                     Edit
                                 </a>
 
-                                <form action="{{ route('levels.destroy', $level) }}"
-                                      method="POST"
-                                      style="display:inline;"
-                                      onsubmit="return confirm('Delete this membership level?');">
-
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit"
-                                            class="btn btn-gray">
-                                        Delete
-                                    </button>
-                                </form>
+                                
                             </td>
                         </tr>
                     @empty
