@@ -13,6 +13,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReceiptController;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,6 +91,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     | MEMBER MANAGEMENT
     |--------------------------------------------------------------------------
     */
+
+
+    // Printable Membership Transaction Receipt
+    Route::get(
+        '/transactions/{transaction}/receipt',
+        [ReceiptController::class, 'show']
+    )->name('transactions.receipt');
 
 
     // Administrator Dashboard
