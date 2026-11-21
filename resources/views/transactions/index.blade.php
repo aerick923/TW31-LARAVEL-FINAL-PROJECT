@@ -36,6 +36,17 @@
         @endif
 
         <div class="toolbar">
+
+
+<form action="{{ route('logout') }}" method="POST"
+      style="display: inline;">
+    @csrf
+
+    <button type="submit" class="btn btn-gray">
+        Logout
+    </button>
+</form>
+
             <a href="{{ route('members.index') }}"
                class="btn btn-gray">
                 Back to Members

@@ -10,7 +10,14 @@ use App\Http\Controllers\WeatherController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\LevelController;
 
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES
+|--------------------------------------------------------------------------
+*/
 
 // Home page
 Route::get('/', function () {
@@ -29,14 +36,6 @@ Route::get('/tasks', [TaskController::class, 'index'])
 Route::post('/tasks', [TaskController::class, 'store'])
     ->name('tasks.store');
 
-// Member Management
-Route::resource('members', MemberController::class);
-
-Route::patch(
-    '/members/{member}/toggle-status',
-    [MemberController::class, 'toggleStatus']
-)->name('members.toggleStatus');
-
 // Public Membership Application
 Route::get(
     '/membership/apply',
@@ -50,60 +49,14 @@ Route::post(
 
 // Live Weather
 Route::get('/weather', [WeatherController::class, 'show'])
+    ->middleware('throttle:60,1')
     ->name('weather.show');
 
-// Transaction Processing System (TPS)
-
-// Display all transactions
-Route::get('/transactions', [TransactionController::class, 'index'])
-    ->name('transactions.index');
-
-// Show transaction creation form
-Route::get('/transactions/create', [TransactionController::class, 'create'])
-    ->name('transactions.create');
-
-// Store new membership or renewal transaction
-Route::post('/transactions', [TransactionController::class, 'store'])
-    ->name('transactions.store');
-
-// View transaction history for a member
-Route::get(
-    '/members/{member}/transactions',
-    [TransactionController::class, 'history']
-)->name('transactions.history');
-
-// View transaction details
-Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])
-    ->name('transactions.show');
-
-// Approve a fully paid transaction
-Route::patch(
-    '/transactions/{transaction}/approve',
-    [TransactionController::class, 'approve']
-)->name('transactions.approve');
-
-// Cancel a pending transaction
-Route::patch(
-    '/transactions/{transaction}/cancel',
-    [TransactionController::class, 'cancel']
-)->name('transactions.cancel');
-
-// Payment Processing System
-
-// Show payment recording form
-Route::get(
-    '/transactions/{transaction}/payments/create',
-    [PaymentController::class, 'create']
-)->name('payments.create');
-
-// Record a payment for a transaction
-Route::post(
-    '/transactions/{transaction}/payments',
-    [PaymentController::class, 'store']
-)->name('payments.store');
-
-
-// Administrator Authentication
+/*
+|--------------------------------------------------------------------------
+| ADMINISTRATOR AUTHENTICATION
+|--------------------------------------------------------------------------
+*/
 
 // Display login page
 Route::get('/login', [AuthController::class, 'showLogin'])
@@ -119,3 +72,118 @@ Route::post('/login', [AuthController::class, 'login'])
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| PROTECTED ADMINISTRATOR ROUTES
+|--------------------------------------------------------------------------
+|
+| Only authenticated users with the admin role can access these routes.
+|
+*/
+
+Route::middleware(['auth', 'admin'])->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | MEMBER MANAGEMENT
+    |--------------------------------------------------------------------------
+    */
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MEMBERSHIP CATEGORY MANAGEMENT
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource('categories', CategoryController::class)
+        ->except(['show']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | MEMBERSHIP LEVEL MANAGEMENT
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource('levels', LevelController::class)
+        ->except(['show']);
+
+
+
+    // Member CRUD
+    Route::resource('members', MemberController::class);
+
+    // Activate or deactivate member
+    Route::patch(
+        '/members/{member}/toggle-status',
+        [MemberController::class, 'toggleStatus']
+    )->name('members.toggleStatus');
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSACTION PROCESSING SYSTEM
+    |--------------------------------------------------------------------------
+    */
+
+    // Display all transactions
+    Route::get(
+        '/transactions',
+        [TransactionController::class, 'index']
+    )->name('transactions.index');
+
+    // Show transaction creation form
+    Route::get(
+        '/transactions/create',
+        [TransactionController::class, 'create']
+    )->name('transactions.create');
+
+    // Store new membership or renewal transaction
+    Route::post(
+        '/transactions',
+        [TransactionController::class, 'store']
+    )->name('transactions.store');
+
+    // View transaction history for a member
+    Route::get(
+        '/members/{member}/transactions',
+        [TransactionController::class, 'history']
+    )->name('transactions.history');
+
+    // View transaction details
+    Route::get(
+        '/transactions/{transaction}',
+        [TransactionController::class, 'show']
+    )->name('transactions.show');
+
+    // Approve a fully paid transaction
+    Route::patch(
+        '/transactions/{transaction}/approve',
+        [TransactionController::class, 'approve']
+    )->name('transactions.approve');
+
+    // Cancel a pending transaction
+    Route::patch(
+        '/transactions/{transaction}/cancel',
+        [TransactionController::class, 'cancel']
+    )->name('transactions.cancel');
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT PROCESSING
+    |--------------------------------------------------------------------------
+    */
+
+    // Show payment recording form
+    Route::get(
+        '/transactions/{transaction}/payments/create',
+        [PaymentController::class, 'create']
+    )->name('payments.create');
+
+    // Record payment
+    Route::post(
+        '/transactions/{transaction}/payments',
+        [PaymentController::class, 'store']
+    )->name('payments.store');
+
+});
