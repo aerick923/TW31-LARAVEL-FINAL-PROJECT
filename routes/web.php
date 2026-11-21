@@ -12,6 +12,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -89,6 +90,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     | MEMBER MANAGEMENT
     |--------------------------------------------------------------------------
     */
+
+
+    // Administrator Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard.index');
+
 
 
     /*
