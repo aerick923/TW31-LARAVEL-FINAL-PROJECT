@@ -12,7 +12,14 @@ class MemberController extends Controller
     // Display and search members
     public function index(Request $request)
     {
-        $query = Member::with('membershipLevel');
+        $query = Member::with([
+    'membershipLevel',
+    'membershipTransactions' => function ($query) {
+        $query->where('status', 'Approved')
+            ->whereNotNull('start_date')
+            ->whereNotNull('end_date');
+    },
+]);
 
         if ($request->filled('search')) {
             $search = $request->search;

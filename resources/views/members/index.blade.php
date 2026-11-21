@@ -77,6 +77,7 @@
                         <th>Level</th>
                         <th>Membership Fee</th>
                         <th>Status</th>
+                        <th>Membership Validity</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -98,6 +99,7 @@
                             </td>
 
                             <td>{{ $member->status }}</td>
+                            <td>{{ $member->membership_validity }}</td>
 
                             <td>
                                 <div class="actions">
