@@ -134,6 +134,12 @@
                     Manage Transactions
                 </a>
 
+
+<a href="{{ route('admin.applications.index') }}" class="btn">
+    Manage Applications
+</a>
+
+
             </div>
         </div>
 

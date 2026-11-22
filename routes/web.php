@@ -17,6 +17,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\AdminMembershipApplicationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -217,6 +218,21 @@ Route::middleware([
 */
 
 Route::middleware(['auth', 'admin'])->group(function () {
+
+
+    // Administrator Membership Applications
+    Route::get(
+        '/admin/membership-applications',
+        [AdminMembershipApplicationController::class, 'index']
+    )->name('admin.applications.index');
+
+
+    // Approve or reject a membership application.
+    Route::patch(
+        '/admin/membership-applications/{application}/status',
+        [AdminMembershipApplicationController::class, 'updateStatus']
+    )->name('admin.applications.update-status');
+
 
     /*
     |--------------------------------------------------------------------------

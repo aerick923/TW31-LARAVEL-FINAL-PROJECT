@@ -53,6 +53,23 @@
             color: #374151;
         }
 
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-approved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
         .membership-actions {
             margin-top: 20px;
         }
@@ -170,9 +187,11 @@
                                 </td>
 
                                 <td>
-                                    <span class="status-badge">
-                                        {{ ucfirst($application->status) }}
-                                    </span>
+                                    
+<span class="status-badge status-{{ strtolower($application->status) }}">
+    {{ ucfirst($application->status) }}
+</span>
+
                                 </td>
 
                                 <td>
