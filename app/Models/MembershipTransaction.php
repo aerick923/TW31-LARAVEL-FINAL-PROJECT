@@ -8,15 +8,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MembershipTransaction extends Model
 {
-    protected $fillable = [
-        'member_id',
-        'transaction_type',
-        'reference_number',
-        'amount',
-        'status',
-        'start_date',
-        'end_date',
-    ];
+    
+protected $fillable = [
+    'member_id',
+    'membership_application_id',
+    'transaction_type',
+    'reference_number',
+    'amount',
+    'status',
+    'start_date',
+    'end_date',
+];
+
 
     protected function casts(): array
     {
@@ -32,6 +35,16 @@ class MembershipTransaction extends Model
     {
         return $this->belongsTo(Member::class);
     }
+
+
+public function application(): BelongsTo
+{
+    return $this->belongsTo(
+        MembershipApplication::class,
+        'membership_application_id'
+    );
+}
+
 
     // A transaction can have multiple payments.
     public function payments(): HasMany
