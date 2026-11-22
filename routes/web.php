@@ -187,21 +187,55 @@ Route::middleware([
 ])->group(function () {
 
    
+    
     // User Dashboard
     Route::get('/user/dashboard', function () {
 
-        // Retrieve applications belonging to the logged-in user.
+        $user = auth()->user();
+
+        // Retrieve only applications belonging to this user.
         $applications = \App\Models\MembershipApplication::query()
-            ->where('user_id', auth()->id())
+            ->where('user_id', $user->id)
             ->with('category')
             ->latest()
             ->get();
 
+        // Find the member record linked to an approved application.
+        $approvedApplication = $applications
+            ->first(function ($application) {
+                return $application->status === 'approved'
+                    && $application->member_id !== null;
+            });
+
+        $member = null;
+        $transactions = collect();
+
+        if ($approvedApplication) {
+
+            // Confirm the member is linked to this user's application.
+            $member = \App\Models\Member::query()
+                ->whereKey($approvedApplication->member_id)
+                ->first();
+
+            if ($member) {
+
+                // Retrieve transactions for this member.
+                $transactions = \App\Models\MembershipTransaction::query()
+                    ->where('member_id', $member->id)
+                    ->with('payments')
+                    ->latest()
+                    ->get();
+            }
+        }
+
         return view('user.dashboard', [
             'applications' => $applications,
+            'member' => $member,
+            'transactions' => $transactions,
         ]);
 
     })->name('user.dashboard');
+
 
 
 });

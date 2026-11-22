@@ -17,56 +17,68 @@ class StoreMembershipApplicationRequest extends FormRequest
             && $user->hasVerifiedEmail();
     }
 
-    public function rules(): array
-    {
-        return [
+    
+public function rules(): array
+{
+    return [
+        'membership_category_id' => [
+            'required',
+            Rule::exists('membership_categories', 'id')
+                ->where('is_active', 1),
+        ],
 
-            // The selected category must exist and be active.
-            'membership_category_id' => [
-                'required',
-                Rule::exists('membership_categories', 'id')
-                    ->where('is_active', 1),
-            ],
+        'full_name' => [
+            'required',
+            'string',
+            'max:150',
+        ],
 
-            // Applicant information.
-            'full_name' => [
-                'required',
-                'string',
-                'max:150',
-            ],
+        'email' => [
+            'required',
+            'email',
+            'max:255',
+            Rule::in([$this->user()?->email]),
+        ],
 
-            // Must match the registered account's email.
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::in([$this->user()?->email]),
-            ],
+       
+'phone' => [
+    'required',
+    'string',
+    'regex:/^09[0-9]{9}$/',
+],
 
-            'phone' => [
-                'nullable',
-                'string',
-                'max:30',
-            ],
 
-            'address' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
+        'address' => [
+            'required',
+            'string',
+            'max:255',
+        ],
 
-            // Google Maps coordinates.
-            'latitude' => [
-                'nullable',
-                'numeric',
-                'between:-90,90',
-            ],
+        'latitude' => [
+            'required',
+            'numeric',
+            'between:-90,90',
+        ],
 
-            'longitude' => [
-                'nullable',
-                'numeric',
-                'between:-180,180',
-            ],
-        ];
-    }
+        'longitude' => [
+            'required',
+            'numeric',
+            'between:-180,180',
+        ],
+    ];
+}
+
+
+public function messages(): array
+{
+    return [
+        'phone.required' =>
+            'Please enter your mobile phone number.',
+
+        'phone.regex' =>
+            'The phone number must contain exactly 11 digits and start with 09.',
+    ];
+}
+
+
 }
