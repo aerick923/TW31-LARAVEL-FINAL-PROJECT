@@ -238,10 +238,19 @@
                 Print Receipt
             </button>
 
-            <a href="{{ route('transactions.show', $transaction) }}"
-               class="btn btn-gray">
-                Back to Transaction
-            </a>
+            
+@if(auth()->user()->role === 'admin')
+    <a href="{{ route('transactions.show', $transaction) }}"
+       class="btn">
+        Back to Transaction
+    </a>
+@else
+    <a href="{{ route('user.dashboard') }}#transactions"
+       class="btn">
+        Back to Dashboard
+    </a>
+@endif
+
         </div>
 
     </div>

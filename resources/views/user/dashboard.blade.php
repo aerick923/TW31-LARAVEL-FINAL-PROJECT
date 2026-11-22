@@ -596,8 +596,11 @@
                                 <th>Type</th>
                                 <th>Amount</th>
                                 <th>Status</th>
-                                <th>Total Paid</th>
-                                <th>Date</th>
+                                
+<th>Total Paid</th>
+<th>Date</th>
+<th>Actions</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -619,6 +622,25 @@
                                     <td>
                                         {{ $transaction->created_at?->format('M d, Y') ?? 'N/A' }}
                                     </td>
+
+
+<td>
+    @if(
+        in_array($transaction->status, ['Paid', 'Approved'])
+        && $transaction->payments->isNotEmpty()
+    )
+        <a href="{{ route('user.transactions.receipt', $transaction) }}"
+           class="action-btn"
+           style="margin-top: 0; white-space: nowrap;">
+            View Receipt
+        </a>
+    @else
+        <span style="color: #756b92;">
+            Not Available
+        </span>
+    @endif
+</td>
+
                                 </tr>
                             @endforeach
                         </tbody>

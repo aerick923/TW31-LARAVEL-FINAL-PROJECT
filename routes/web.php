@@ -186,6 +186,14 @@ Route::middleware([
     'verified',
 ])->group(function () {
 
+
+    // Allow regular users to view only their own receipts.
+    Route::get(
+        '/user/transactions/{transaction}/receipt',
+        [ReceiptController::class, 'showUserReceipt']
+    )->name('user.transactions.receipt');
+
+
    
     
     // User Dashboard
