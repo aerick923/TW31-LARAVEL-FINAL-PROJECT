@@ -10,7 +10,67 @@
 
     <link rel="stylesheet"
           href="{{ asset('css/design.css') }}">
+
+    <style>
+        .application-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .application-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .application-table th,
+        .application-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd6fe;
+        }
+
+        .application-table th {
+            background: #ede9fe;
+            color: #30236b;
+        }
+
+        .application-table td {
+            overflow-wrap: anywhere;
+        }
+
+        .application-table tr:hover {
+            background: #faf8ff;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .membership-actions {
+            margin-top: 20px;
+        }
+
+        .membership-actions .btn {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .empty-applications {
+            padding: 20px;
+            background: #f5f3ff;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+    </style>
 </head>
+
 <body>
 
 <header class="hero">
@@ -32,7 +92,7 @@
                 padding: 15px;
                 border-radius: 8px;
                 margin: 20px 0;
-            ">
+            " role="status">
                 {{ session('success') }}
             </div>
         @endif
@@ -63,12 +123,87 @@
 
         <hr style="margin: 25px 0;">
 
-        <h3>Membership Services</h3>
+        <!-- MEMBERSHIP APPLICATION HISTORY -->
+
+        <h3>My Membership Applications</h3>
 
         <p>
-            Your membership applications and account
-            services will appear here.
+            View your submitted membership applications
+            and their current status.
         </p>
+
+        @if($applications->isEmpty())
+
+            <div class="empty-applications">
+                <p>
+                    You have not submitted any membership
+                    applications yet.
+                </p>
+            </div>
+
+        @else
+
+            <div class="application-table-wrapper">
+
+                <table class="application-table">
+
+                    <thead>
+                        <tr>
+                            <th>Reference No.</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Date Submitted</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach($applications as $application)
+
+                            <tr>
+                                <td>
+                                    {{ $application->reference_no }}
+                                </td>
+
+                                <td>
+                                    {{ $application->category?->name ?? 'Unavailable' }}
+                                </td>
+
+                                <td>
+                                    <span class="status-badge">
+                                        {{ ucfirst($application->status) }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ $application->created_at?->format('M d, Y') ?? 'N/A' }}
+                                </td>
+                            </tr>
+
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        @endif
+
+        <!-- MEMBERSHIP APPLICATION BUTTON -->
+
+        <div class="membership-actions">
+
+            <a href="{{ route('membership.create') }}"
+               class="btn">
+                Apply for Membership
+            </a>
+
+        </div>
+
+        <hr style="margin: 25px 0;">
+
+        <!-- LOGOUT -->
 
         <form action="{{ route('logout') }}"
               method="POST"

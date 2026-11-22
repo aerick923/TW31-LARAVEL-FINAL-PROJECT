@@ -80,6 +80,10 @@
         .login-card .error-box {
             margin-bottom: 20px;
         }
+
+
+
+
     </style>
 </head>
 
@@ -159,6 +163,10 @@
             </button>
 
         </form>
+
+
+
+
 
         <div class="register-section">
             <p>
