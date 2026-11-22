@@ -41,16 +41,33 @@ Route::get('/tasks', [TaskController::class, 'index'])
 Route::post('/tasks', [TaskController::class, 'store'])
     ->name('tasks.store');
 
-// Public Membership Application
-Route::get(
-    '/membership/apply',
-    [MembershipApplicationController::class, 'create']
-)->name('membership.create');
 
-Route::post(
-    '/membership/apply',
-    [MembershipApplicationController::class, 'store']
-)->name('membership.store');
+/*
+|--------------------------------------------------------------------------
+| VERIFIED USER MEMBERSHIP APPLICATION
+|--------------------------------------------------------------------------
+|
+| Only authenticated, verified regular users can apply.
+|
+*/
+
+Route::middleware(['auth', 'regular', 'verified'])->group(function () {
+
+    // Display membership application form.
+    Route::get(
+        '/membership/apply',
+        [MembershipApplicationController::class, 'create']
+    )->name('membership.create');
+
+    // Submit membership application.
+    Route::post(
+        '/membership/apply',
+        [MembershipApplicationController::class, 'store']
+    )->middleware('throttle:5,1')
+     ->name('membership.store');
+
+});
+
 
 // Live Weather
 Route::get('/weather', [WeatherController::class, 'show'])

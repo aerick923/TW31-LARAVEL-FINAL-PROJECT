@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MembershipApplication extends Model
 {
     protected $fillable = [
+        'user_id',
         'membership_category_id',
         'reference_no',
         'full_name',

@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 
 class MembershipApplicationController extends Controller
 {
+    // Display the membership application form.
     public function create(): View
     {
         return view('membership.create', [
@@ -23,27 +24,38 @@ class MembershipApplicationController extends Controller
         ]);
     }
 
-    public function store(StoreMembershipApplicationRequest $request): RedirectResponse
-    {
+    // Save an application for the authenticated user.
+    public function store(
+        StoreMembershipApplicationRequest $request
+    ): RedirectResponse {
+
         $application = DB::transaction(function () use ($request) {
+
             $application = MembershipApplication::create([
                 ...$request->validated(),
-                'reference_no' => 'MEM-'.Str::upper(Str::random(10)),
-            ]);
 
-            Notification::route('mail', $application->email)
-                ->notify(new MembershipApplicationSubmitted($application));
+                // Associate the application with its owner.
+                'user_id' => $request->user()->id,
 
-            $application->update([
-                'verification_sent_at' => now()
+                'reference_no' => 'MEM-' . Str::upper(Str::random(10)),
             ]);
 
             return $application;
         });
 
-        return redirect()->route('membership.create')->with(
-            'success',
-            "Application saved. Verification email queued. Reference: {$application->reference_no}"
-        );
+        // Send the notification after saving the application.
+        Notification::route('mail', $application->email)
+            ->notify(new MembershipApplicationSubmitted($application));
+
+        $application->update([
+            'verification_sent_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('user.dashboard')
+            ->with(
+                'success',
+                "Membership application submitted successfully! Reference: {$application->reference_no}"
+            );
     }
 }
