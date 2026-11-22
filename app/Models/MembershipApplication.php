@@ -9,6 +9,7 @@ class MembershipApplication extends Model
 {
     protected $fillable = [
         'user_id',
+        'member_id',
         'membership_category_id',
         'reference_no',
         'full_name',
@@ -35,4 +36,9 @@ class MembershipApplication extends Model
             'membership_category_id'
         );
     }
+
+    public function member(): BelongsTo
+{
+    return $this->belongsTo(Member::class);
+}
 }
