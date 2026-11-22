@@ -185,10 +185,23 @@ Route::middleware([
     'verified',
 ])->group(function () {
 
+   
     // User Dashboard
     Route::get('/user/dashboard', function () {
-        return view('user.dashboard');
+
+        // Retrieve applications belonging to the logged-in user.
+        $applications = \App\Models\MembershipApplication::query()
+            ->where('user_id', auth()->id())
+            ->with('category')
+            ->latest()
+            ->get();
+
+        return view('user.dashboard', [
+            'applications' => $applications,
+        ]);
+
     })->name('user.dashboard');
+
 
 });
 

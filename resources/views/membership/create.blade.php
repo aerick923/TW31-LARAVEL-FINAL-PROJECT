@@ -74,13 +74,30 @@
             @endforeach
         </select>
 
-        <label>Full Name</label>
-        <input name="full_name"
-               value="{{ old('full_name') }}" required>
+        
+<label for="full_name">Full Name</label>
 
-        <label>Email</label>
-        <input type="email" name="email"
-               value="{{ old('email') }}" required>
+<input
+    type="text"
+    id="full_name"
+    name="full_name"
+    value="{{ old('full_name', auth()->user()->name) }}"
+    required
+>
+
+
+       
+<label for="email">Email Address</label>
+
+<input
+    type="email"
+    id="email"
+    name="email"
+    value="{{ auth()->user()->email }}"
+    readonly
+    required
+>
+
 
         <label>Phone</label>
         <input name="phone" value="{{ old('phone') }}">
