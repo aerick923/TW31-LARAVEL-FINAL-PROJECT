@@ -7,9 +7,7 @@
     <title>Apply for Membership | MemberHub</title>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -18,88 +16,26 @@
             color: #30236b;
         }
 
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 255px;
-            background: linear-gradient(180deg, #30236b, #49358f);
-            color: white;
-            padding: 28px 17px;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .brand {
-            font-size: 24px;
-            font-weight: 800;
-            padding: 0 13px 25px;
-            border-bottom: 1px solid #6755a2;
-            margin-bottom: 25px;
-        }
-
-        .sidebar-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #c8bdf4;
-            padding: 0 13px;
-            margin-bottom: 15px;
-        }
-
-        .sidebar-link {
-            display: block;
-            padding: 14px 15px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            text-decoration: none;
-            color: #f3efff;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .sidebar-link:hover,
-        .sidebar-link.active {
-            background: #755bd5;
-        }
-
-        .sidebar-bottom {
-            margin-top: auto;
-            padding-top: 20px;
-            border-top: 1px solid #6755a2;
-        }
-
-        .logout-btn {
-            width: 100%;
-            padding: 13px;
-            border: 1px solid #8271bd;
-            background: transparent;
-            color: white;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .main-area {
-            margin-left: 255px;
-            min-height: 100vh;
-        }
-
         .topbar {
             background: white;
             border-bottom: 1px solid #e6dfff;
-            padding: 22px 35px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
+            padding: 20px 35px;
         }
 
-        .topbar-title {
-            font-size: 17px;
+        .topbar-inner {
+            max-width: 1100px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            font-size: 21px;
             font-weight: 800;
+            color: #30236b;
+            text-decoration: none;
         }
 
         .topbar-user {
@@ -108,9 +44,9 @@
         }
 
         .content {
-            max-width: 1100px;
+            max-width: 1000px;
             margin: auto;
-            padding: 30px 35px 60px;
+            padding: 35px 25px 65px;
         }
 
         .page-heading {
@@ -132,7 +68,7 @@
             border: 1px solid #e4dcff;
             border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 8px 25px rgba(48, 35, 107, .05);
+            box-shadow: 0 8px 25px rgba(48,35,107,.05);
         }
 
         .form-section {
@@ -162,6 +98,7 @@
             background: #ede9fe;
             color: #6044c3;
             font-weight: 800;
+            flex-shrink: 0;
         }
 
         .section-heading h2 {
@@ -199,7 +136,7 @@
 
         input:focus, select:focus {
             border-color: #8065e8;
-            box-shadow: 0 0 0 3px rgba(128, 101, 232, .12);
+            box-shadow: 0 0 0 3px rgba(128,101,232,.12);
         }
 
         input[readonly] {
@@ -214,6 +151,24 @@
             margin-top: 7px;
         }
 
+        .level-details {
+            background: #f7f5ff;
+            border: 1px solid #e4dcff;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 12px;
+            line-height: 1.8;
+        }
+
+        .level-details strong {
+            color: #50429a;
+        }
+
+        .level-details p {
+            margin: 4px 0;
+            overflow-wrap: anywhere;
+        }
+
         #map {
             width: 100%;
             height: 360px;
@@ -222,8 +177,7 @@
             background: #eee9ff;
         }
 
-        .location-info,
-        .weather-card {
+        .location-info, .weather-card {
             background: #f7f5ff;
             border: 1px solid #e4dcff;
             border-radius: 10px;
@@ -244,8 +198,7 @@
             flex-wrap: wrap;
         }
 
-        .submit-btn,
-        .back-btn {
+        .submit-btn, .back-btn {
             display: inline-block;
             padding: 14px 20px;
             border-radius: 9px;
@@ -261,9 +214,7 @@
             border: none;
         }
 
-        .submit-btn:hover {
-            background: #684bd3;
-        }
+        .submit-btn:hover { background: #684bd3; }
 
         .back-btn {
             background: #eee9ff;
@@ -286,148 +237,69 @@
             margin-bottom: 22px;
         }
 
-        @media (max-width: 950px) {
-            .sidebar {
-                width: 210px;
-            }
-
-            .main-area {
-                margin-left: 210px;
-            }
-        }
-
         @media (max-width: 650px) {
-            .sidebar {
-                position: relative;
-                width: 100%;
-                height: auto;
-            }
-
-            .main-area {
-                margin-left: 0;
-            }
-
-            .topbar {
-                padding: 18px;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .form-card {
-                padding: 20px;
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            #map {
-                height: 280px;
-            }
+            .topbar { padding: 18px; }
+            .content { padding: 20px; }
+            .form-card { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+            #map { height: 280px; }
         }
     </style>
 </head>
 
 <body>
 
-<aside class="sidebar">
-    <div class="brand">MemberHub</div>
-
-    <div class="sidebar-label">Member Workspace</div>
-
-    <nav aria-label="Member navigation">
-        <a href="{{ route('user.dashboard') }}"
-           class="sidebar-link">
-            Dashboard
+<header class="topbar">
+    <div class="topbar-inner">
+        <a href="{{ route('user.dashboard') }}" class="brand">
+            MemberHub
         </a>
-
-        <a href="{{ route('user.dashboard') }}#membership"
-           class="sidebar-link">
-            My Membership
-        </a>
-
-        <a href="{{ route('user.dashboard') }}#applications"
-           class="sidebar-link">
-            My Applications
-        </a>
-
-        <a href="{{ route('user.dashboard') }}#transactions"
-           class="sidebar-link">
-            My Transactions
-        </a>
-
-        <a href="{{ route('user.dashboard') }}#account"
-           class="sidebar-link">
-            My Account
-        </a>
-
-        <a href="{{ route('membership.create') }}"
-           class="sidebar-link active"
-           aria-current="page">
-            Apply for Membership
-        </a>
-    </nav>
-
-    <div class="sidebar-bottom">
-        <form action="{{ route('logout') }}" method="POST">
-            @csrf
-            <button type="submit" class="logout-btn">
-                Logout
-            </button>
-        </form>
-    </div>
-</aside>
-
-<div class="main-area">
-
-    <header class="topbar">
-        <div class="topbar-title">Membership Application</div>
         <div class="topbar-user">
             {{ auth()->user()->name }}
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="content">
+<main class="content">
 
-        <div class="page-heading">
-            <h1>Apply for Membership</h1>
-            <p>
-                Complete the application form below.
-                Your application will be reviewed by an administrator.
-            </p>
+    <div class="page-heading">
+        <h1>Apply for Membership</h1>
+        <p>
+            Complete the application form below.
+            Your application will be reviewed by an administrator.
+        </p>
+    </div>
+
+    @if(session('success'))
+        <div class="success-box" role="status">
+            {{ session('success') }}
         </div>
+    @endif
 
-        @if(session('success'))
-            <div class="success-box" role="status">
-                {{ session('success') }}
+    @if($errors->any())
+        <div class="error-box" role="alert">
+            <strong>Please correct the following:</strong>
+            <ul>
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="POST"
+          action="{{ route('membership.store') }}"
+          class="form-card">
+
+        @csrf
+
+        <section class="form-section">
+            <div class="section-heading">
+                <div class="section-number">1</div>
+                <h2>Membership Information</h2>
             </div>
-        @endif
 
-        @if($errors->any())
-            <div class="error-box" role="alert">
-                <strong>Please correct the following:</strong>
-                <ul>
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST"
-              action="{{ route('membership.store') }}"
-              class="form-card">
-
-            @csrf
-
-            <section class="form-section">
-                <div class="section-heading">
-                    <div class="section-number">1</div>
-                    <h2>Membership Information</h2>
-                </div>
-
+            <div class="form-grid">
                 <div class="form-group">
                     <label for="membership_category_id">
                         Membership Category
@@ -442,143 +314,228 @@
                             <option value="{{ $category->id }}"
                                 @selected(old('membership_category_id') == $category->id)>
                                 {{ $category->name }}
-                                {{ $category->level ? ' - '.$category->level : '' }}
-                                (₱{{ number_format($category->fee, 2) }})
                             </option>
                         @endforeach
                     </select>
 
                     <p class="helper">
-                        Select the membership category that applies to you.
-                        The fee will be displayed alongside each category.
+                        Select the category that best describes you.
                     </p>
                 </div>
-            </section>
 
-            <section class="form-section">
-                <div class="section-heading">
-                    <div class="section-number">2</div>
-                    <h2>Personal Information</h2>
+                <div class="form-group">
+                    <label for="membership_level_id">
+                        Membership Level
+                    </label>
+
+                    <select id="membership_level_id"
+                            name="membership_level_id"
+                            required>
+                        <option value="">Choose a level</option>
+
+                        @foreach($levels as $level)
+                            <option value="{{ $level->id }}"
+                                data-fee="{{ $level->fee }}"
+                                data-validity="{{ $level->validity_months }}"
+                                data-benefits="{{ $level->benefits }}"
+                                @selected(old('membership_level_id') == $level->id)>
+                                {{ $level->name }}
+                                — ₱{{ number_format($level->fee ?? 0, 2) }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <p class="helper">
+                        Choose your preferred membership level.
+                        Each level has its own fee, validity period,
+                        and benefits.
+                    </p>
                 </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="full_name">Full Name</label>
-                        <input type="text"
-                               id="full_name"
-                               name="full_name"
-                               value="{{ old('full_name', auth()->user()->name) }}"
-                               required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email"
-                               id="email"
-                               name="email"
-                               value="{{ auth()->user()->email }}"
-                               readonly
-                               required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        
-<input
-    type="tel"
-    id="phone"
-    name="phone"
-    value="{{ old('phone') }}"
-    placeholder="09XXXXXXXXX"
-    maxlength="11"
-    minlength="11"
-    pattern="09[0-9]{9}"
-    inputmode="numeric"
-    title="Enter exactly 11 digits starting with 09."
-    required
-    oninput="this.value = this.value.replace(/\D/g, '').slice(0, 11)"
->
-<p class="helper">
-    Enter an 11-digit Philippine mobile number starting with 09.
-    Example: 09202639948
-</p>
-
-                    </div>
-
-                    <div class="form-group">
-                        <label for="address">Complete Address</label>
-                        <input type="text"
-                               id="address"
-                               name="address"
-                               value="{{ old('address') }}"
-                               placeholder="Enter your complete address">
-                    </div>
-                </div>
-            </section>
-
-            <section class="form-section">
-                <div class="section-heading">
-                    <div class="section-number">3</div>
-                    <h2>Location Information</h2>
-                </div>
-
-                <p class="helper">
-                    Click your location on the map to select it.
-                    Your selected coordinates will be saved
-                    with your application.
-                </p>
-
-                <div id="map"
-                     aria-label="Google Maps location selector"></div>
-
-                <input id="lat"
-                       type="hidden"
-                       name="latitude"
-                       value="{{ old('latitude') }}">
-
-                <input id="lon"
-                       type="hidden"
-                       name="longitude"
-                       value="{{ old('longitude') }}">
-
-                <div class="location-info"
-                     id="coordinates"
-                     role="status">
-                    No location selected yet.
-                    Please click a location on the map.
-                </div>
-
-                <div class="weather-card">
-                    <strong>Weather at Selected Location</strong>
-                    <div id="weather" role="status">
-                        Select a location to view the weather.
-                    </div>
-                </div>
-            </section>
-
-            <div class="form-actions">
-                <button type="submit" class="submit-btn">
-                    Submit Membership Application
-                </button>
-
-                <a href="{{ route('user.dashboard') }}"
-                   class="back-btn">
-                    Back to Dashboard
-                </a>
             </div>
 
-        </form>
+            <div class="level-details"
+                 id="level-details"
+                 hidden
+                 aria-live="polite">
 
-    </main>
-</div>
+                <p>
+                    <strong>Membership Fee:</strong>
+                    <span id="selected-fee"></span>
+                </p>
+
+                <p>
+                    <strong>Validity Period:</strong>
+                    <span id="selected-validity"></span>
+                </p>
+
+                <p>
+                    <strong>Benefits:</strong>
+                    <span id="selected-benefits"></span>
+                </p>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="section-heading">
+                <div class="section-number">2</div>
+                <h2>Personal Information</h2>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="full_name">Full Name</label>
+                    <input type="text"
+                           id="full_name"
+                           name="full_name"
+                           value="{{ old('full_name', auth()->user()->name) }}"
+                           maxlength="150"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           value="{{ auth()->user()->email }}"
+                           readonly
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel"
+                           id="phone"
+                           name="phone"
+                           value="{{ old('phone') }}"
+                           placeholder="09XXXXXXXXX"
+                           maxlength="11"
+                           minlength="11"
+                           pattern="09[0-9]{9}"
+                           inputmode="numeric"
+                           title="Enter exactly 11 digits starting with 09."
+                           required
+                           oninput="this.value = this.value.replace(/\D/g, '').slice(0, 11)">
+
+                    <p class="helper">
+                        Enter an 11-digit Philippine mobile number
+                        starting with 09.
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Complete Address</label>
+                    <input type="text"
+                           id="address"
+                           name="address"
+                           value="{{ old('address') }}"
+                           placeholder="Enter your complete address"
+                           maxlength="255"
+                           required>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="section-heading">
+                <div class="section-number">3</div>
+                <h2>Location Information</h2>
+            </div>
+
+            <p class="helper">
+                Click your location on the map to select it.
+                Your selected coordinates will be saved
+                with your application.
+            </p>
+
+            <div id="map"
+                 aria-label="Google Maps location selector"></div>
+
+            <input id="lat"
+                   type="hidden"
+                   name="latitude"
+                   value="{{ old('latitude') }}">
+
+            <input id="lon"
+                   type="hidden"
+                   name="longitude"
+                   value="{{ old('longitude') }}">
+
+            <div class="location-info"
+                 id="coordinates"
+                 role="status">
+                No location selected yet.
+                Please click a location on the map.
+            </div>
+
+            <div class="weather-card">
+                <strong>Weather at Selected Location</strong>
+                <div id="weather" role="status">
+                    Select a location to view the weather.
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="submit-btn">
+                Submit Membership Application
+            </button>
+
+            <a href="{{ route('user.dashboard') }}"
+               class="back-btn">
+                Back to Dashboard
+            </a>
+        </div>
+    </form>
+</main>
 
 <script>
+    // Display the selected membership level's details.
+    const levelSelect = document.getElementById(
+        'membership_level_id'
+    );
+
+    function updateLevelDetails() {
+        const option = levelSelect.selectedOptions[0];
+        const details = document.getElementById('level-details');
+
+        if (!levelSelect.value || !option) {
+            details.hidden = true;
+            return;
+        }
+
+        details.hidden = false;
+
+        const fee = option.dataset.fee;
+        const validity = option.dataset.validity;
+        const benefits = option.dataset.benefits;
+
+        document.getElementById('selected-fee').textContent =
+            fee !== undefined && fee !== ''
+                ? '₱' + Number(fee).toLocaleString('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+                : 'Not specified';
+
+        document.getElementById('selected-validity').textContent =
+            validity
+                ? validity + ' months'
+                : 'Not specified';
+
+        document.getElementById('selected-benefits').textContent =
+            benefits || 'No benefits specified';
+    }
+
+    levelSelect.addEventListener('change', updateLevelDetails);
+    updateLevelDetails();
+
+    // Google Maps and weather integration.
     let map;
     let marker;
 
     function loadWeather(lat, lon) {
         const weatherElement = document.getElementById('weather');
-
         weatherElement.textContent = 'Loading weather...';
 
         const url = @json(route('weather.show'));
@@ -635,8 +592,13 @@
             Number(savedLon) >= -180 &&
             Number(savedLon) <= 180;
 
-        const lat = hasSavedLocation ? Number(savedLat) : 14.5995;
-        const lon = hasSavedLocation ? Number(savedLon) : 120.9842;
+        const lat = hasSavedLocation
+            ? Number(savedLat)
+            : 14.5995;
+
+        const lon = hasSavedLocation
+            ? Number(savedLon)
+            : 120.9842;
 
         map = new google.maps.Map(
             document.getElementById('map'),
@@ -660,20 +622,24 @@
 
     window.initMap = initMap;
 
-    document.querySelector('.form-card').addEventListener('submit', event => {
-        const lat = document.getElementById('lat').value;
-        const lon = document.getElementById('lon').value;
+    document.querySelector('.form-card')
+        .addEventListener('submit', event => {
+            const lat = document.getElementById('lat').value;
+            const lon = document.getElementById('lon').value;
 
-        if (!lat || !lon) {
-            event.preventDefault();
+            if (!lat || !lon) {
+                event.preventDefault();
 
-            document.getElementById('coordinates').textContent =
-                'Please select a location on the map before submitting.';
+                document.getElementById('coordinates').textContent =
+                    'Please select a location on the map before submitting.';
 
-            document.getElementById('coordinates')
-                .scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    });
+                document.getElementById('coordinates')
+                    .scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+            }
+        });
 </script>
 
 <script async

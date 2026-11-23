@@ -17,7 +17,7 @@ class AdminMembershipApplicationController extends Controller
     public function index(Request $request): View
     {
         $query = MembershipApplication::query()
-            ->with('category');
+            ->with(['category', 'membershipLevel']);
 
         if ($request->filled('status')) {
             $status = $request->validate([
@@ -42,6 +42,7 @@ class AdminMembershipApplicationController extends Controller
         Request $request,
         MembershipApplication $application
     ): RedirectResponse {
+
         $validated = $request->validate([
             'status' => ['required', 'in:approved,rejected'],
         ]);
@@ -62,15 +63,27 @@ class AdminMembershipApplicationController extends Controller
 
             if ($validated['status'] === 'approved') {
 
+                // Retrieve the selected membership category.
                 $category = $application->category;
 
                 if (!$category) {
                     throw ValidationException::withMessages([
-                        'status' => 'The membership category was not found.',
+                        'status' =>
+                            'The membership category was not found.',
                     ]);
                 }
 
-                // Avoid automatically merging different member records.
+                // Retrieve the independently selected membership level.
+                $membershipLevel = $application->membershipLevel;
+
+                if (!$membershipLevel) {
+                    throw ValidationException::withMessages([
+                        'status' =>
+                            'This application does not have a valid membership level. Please review the application before approving.',
+                    ]);
+                }
+
+                // Prevent duplicate member records.
                 $existingMember = Member::where(
                     'email',
                     $application->email
@@ -78,7 +91,8 @@ class AdminMembershipApplicationController extends Controller
 
                 if ($existingMember) {
                     throw ValidationException::withMessages([
-                        'status' => 'A member with this email already exists. Please review the existing record before approving.',
+                        'status' =>
+                            'A member with this email already exists. Please review the existing record before approving.',
                     ]);
                 }
 
@@ -93,27 +107,32 @@ class AdminMembershipApplicationController extends Controller
                     )->exists()
                 );
 
-                // Create the member without activating membership.
+                // Create the member using the selected category
+                // and membership level.
                 $member = Member::create([
                     'membership_number' => $membershipNumber,
                     'name' => $application->full_name,
                     'email' => $application->email,
                     'phone' => $application->phone,
                     'category' => $category->name,
-                    'level' => $category->level ?: 'Standard',
+                    'level' => $membershipLevel->name,
                     'status' => 'Pending',
                 ]);
 
-                // Link the application to its member.
+                // Link the approved application to its member.
                 $application->member_id = $member->id;
             }
 
+            // Save the administrator's decision.
             $application->status = $validated['status'];
             $application->save();
         });
 
         return redirect()
             ->route('admin.applications.index')
-            ->with('success', 'Application status updated successfully!');
+            ->with(
+                'success',
+                'Application status updated successfully!'
+            );
     }
 }

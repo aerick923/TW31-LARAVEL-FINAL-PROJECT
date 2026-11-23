@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMembershipApplicationRequest;
 use App\Models\MembershipApplication;
 use App\Models\MembershipCategory;
+use App\Models\MembershipLevel;
 use App\Notifications\MembershipApplicationSubmitted;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -15,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 class MembershipApplicationController extends Controller
 {
-    // Check whether a user already has a pending
+    // Check whether the user already has a pending
     // or approved membership application.
     private function hasExistingApplication(int $userId): bool
     {
@@ -28,6 +29,7 @@ class MembershipApplicationController extends Controller
     // Display the membership application form.
     public function create(): View|RedirectResponse
     {
+        // Prevent duplicate pending or approved applications.
         if ($this->hasExistingApplication(auth()->id())) {
             return redirect()
                 ->route('user.dashboard')
@@ -37,27 +39,72 @@ class MembershipApplicationController extends Controller
                 );
         }
 
+        // Retrieve categories and levels independently.
         return view('membership.create', [
-            'categories' => MembershipCategory::where('is_active', true)
-                ->orderBy('name')
+
+            // Available membership categories.
+            'categories' => MembershipCategory::query()
+                ->where('is_active', true)
+                ->whereIn('name', [
+                    'Student',
+                    'Regular',
+                    'Senior Citizen',
+                    'Corporate',
+                ])
+                ->orderByRaw("
+                    CASE name
+                        WHEN 'Student' THEN 1
+                        WHEN 'Regular' THEN 2
+                        WHEN 'Senior Citizen' THEN 3
+                        WHEN 'Corporate' THEN 4
+                        ELSE 5
+                    END
+                ")
+                ->get(),
+
+            // Available membership levels.
+            'levels' => MembershipLevel::query()
+                ->whereIn('name', [
+                    'Basic',
+                    'Silver',
+                    'Gold',
+                    'Platinum',
+                ])
+                ->orderByRaw("
+                    CASE name
+                        WHEN 'Basic' THEN 1
+                        WHEN 'Silver' THEN 2
+                        WHEN 'Gold' THEN 3
+                        WHEN 'Platinum' THEN 4
+                        ELSE 5
+                    END
+                ")
                 ->get(),
         ]);
     }
 
-    // Save an application for the authenticated user.
+    // Save a membership application for the authenticated user.
     public function store(
         StoreMembershipApplicationRequest $request
     ): RedirectResponse {
 
         $application = DB::transaction(function () use ($request) {
 
-            // Lock the user row to prevent simultaneous
+            // Lock the user record to prevent simultaneous
             // duplicate application submissions.
-            DB::table('users')
+            $user = DB::table('users')
                 ->where('id', $request->user()->id)
                 ->lockForUpdate()
                 ->first();
 
+            if (!$user) {
+                throw ValidationException::withMessages([
+                    'membership_category_id' =>
+                        'Your user account could not be found.',
+                ]);
+            }
+
+            // Prevent duplicate pending or approved applications.
             if ($this->hasExistingApplication($request->user()->id)) {
                 throw ValidationException::withMessages([
                     'membership_category_id' =>
@@ -65,9 +112,16 @@ class MembershipApplicationController extends Controller
                 ]);
             }
 
-            // Generate a unique application reference.
+            // Retrieve validated application information.
+            // This includes the independently selected
+            // membership_category_id and membership_level_id.
+            $validated = $request->validated();
+
+            // Generate a unique application reference number.
             do {
-                $reference = 'MEM-' . Str::upper(Str::random(10));
+                $reference = 'MEM-' .
+                    Str::upper(Str::random(10));
+
             } while (
                 MembershipApplication::where(
                     'reference_no',
@@ -75,22 +129,29 @@ class MembershipApplicationController extends Controller
                 )->exists()
             );
 
+            // Create the membership application.
+            // Do not create a member record at this stage.
+            // Member creation happens after administrator approval.
             return MembershipApplication::create([
-                ...$request->validated(),
+                ...$validated,
                 'user_id' => $request->user()->id,
                 'reference_no' => $reference,
                 'status' => 'pending',
             ]);
         });
 
-        // Queue the email notification after saving.
+        // Send the application notification after saving.
         Notification::route('mail', $application->email)
-            ->notify(new MembershipApplicationSubmitted($application));
+            ->notify(
+                new MembershipApplicationSubmitted($application)
+            );
 
+        // Record when the notification was sent.
         $application->update([
             'verification_sent_at' => now(),
         ]);
 
+        // Return the user to their dashboard.
         return redirect()
             ->route('user.dashboard')
             ->with(

@@ -50,6 +50,7 @@ class TransactionController extends Controller
 
             $type = $validated['transaction_type'];
 
+            // Prevent duplicate new-membership transactions.
             if ($type === 'New Membership') {
                 $existing = $member->membershipTransactions()
                     ->where('transaction_type', 'New Membership')
@@ -64,6 +65,7 @@ class TransactionController extends Controller
                 }
             }
 
+            // Validate renewal eligibility.
             if ($type === 'Renewal') {
                 $hasApproved = $member->membershipTransactions()
                     ->where('status', 'Approved')
@@ -89,58 +91,81 @@ class TransactionController extends Controller
                 }
             }
 
-            // Find the member's approved online application.
-            $application = MembershipApplication::with('category')
-                ->where('member_id', $member->id)
-                ->where('status', 'approved')
-                ->orderByDesc('id')
-                ->first();
-
             $applicationId = null;
+            $level = null;
 
-            if ($application) {
-                if (!$application->category) {
-                    return back()->withInput()->with(
-                        'error',
-                        'The application category is unavailable.'
-                    );
-                }
+            // New online memberships use the level
+            // selected during the application.
+            if ($type === 'New Membership') {
 
-                // Online application fees come from categories.
-                $amount = $application->category->fee;
+                $application = MembershipApplication::query()
+                    ->with('membershipLevel')
+                    ->where('member_id', $member->id)
+                    ->where('status', 'approved')
+                    ->latest('id')
+                    ->first();
 
-                if ($type === 'New Membership') {
+                if ($application) {
+
+                    $level = $application->membershipLevel;
+
+                    if (!$level) {
+                        return back()->withInput()->with(
+                            'error',
+                            'The approved application has no valid membership level.'
+                        );
+                    }
+
                     $applicationId = $application->id;
 
-                    if (MembershipTransaction::where(
-                        'membership_application_id',
-                        $applicationId
-                    )->exists()) {
+                    // Prevent duplicate application transactions.
+                    $existingApplicationTransaction =
+                        MembershipTransaction::query()
+                            ->where(
+                                'membership_application_id',
+                                $applicationId
+                            )
+                            ->exists();
+
+                    if ($existingApplicationTransaction) {
                         return back()->withInput()->with(
                             'error',
                             'A transaction already exists for this application.'
                         );
                     }
                 }
-            } else {
-                // Manual members use membership-level fees.
-                $level = MembershipLevel::where(
-                    'name',
-                    $member->level
-                )->first();
+            }
+
+            // Manual memberships and renewals use
+            // the member's currently assigned level.
+            if (!$level) {
+                $level = MembershipLevel::query()
+                    ->where('name', $member->level)
+                    ->first();
 
                 if (!$level) {
                     return back()->withInput()->with(
                         'error',
-                        'No valid membership level or approved application was found.'
+                        'The member has no valid membership level.'
                     );
                 }
-
-                $amount = $level->fee;
             }
 
+            // All membership fees come from membership levels.
+            if ($level->fee === null) {
+                return back()->withInput()->with(
+                    'error',
+                    'The selected membership level has no configured fee.'
+                );
+            }
+
+            $amount = $level->fee;
+
+            // Generate a unique transaction reference.
             do {
-                $reference = 'TXN-' . strtoupper(Str::random(10));
+                $reference = 'TXN-' .
+                    strtoupper(Str::random(10));
+
             } while (
                 MembershipTransaction::where(
                     'reference_number',
@@ -159,7 +184,10 @@ class TransactionController extends Controller
 
             return redirect()
                 ->route('transactions.index')
-                ->with('success', 'Transaction created successfully!');
+                ->with(
+                    'success',
+                    'Transaction created successfully!'
+                );
         });
     }
 
@@ -216,23 +244,35 @@ class TransactionController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Online application memberships use 12 months.
-            
-            // Check whether the member has an approved online application.
-            $hasApprovedApplication = MembershipApplication::query()
-                ->where('member_id', $member->id)
-                ->where('status', 'approved')
-                ->exists();
+            // Determine validity from the transaction's
+            // selected membership level.
+            $level = null;
 
-            if ($hasApprovedApplication) {
-                // Online memberships have 12-month validity.
-                $validityMonths = 12;
-            } else {
-                // Manual memberships use their assigned level.
-                $level = MembershipLevel::where(
-                    'name',
-                    $member->level
-                )->first();
+            if ($transaction->transaction_type === 'New Membership'
+                && $transaction->membership_application_id) {
+
+                $application = MembershipApplication::query()
+                    ->with('membershipLevel')
+                    ->find($transaction->membership_application_id);
+
+                if ($application) {
+                    $level = $application->membershipLevel;
+                }
+
+                if (!$level) {
+                    return back()->with(
+                        'error',
+                        'The linked application has no valid membership level.'
+                    );
+                }
+            }
+
+            // Manual memberships and renewals use
+            // the member's assigned membership level.
+            if (!$level) {
+                $level = MembershipLevel::query()
+                    ->where('name', $member->level)
+                    ->first();
 
                 if (!$level) {
                     return back()->with(
@@ -240,10 +280,9 @@ class TransactionController extends Controller
                         'The membership level was not found.'
                     );
                 }
-
-                $validityMonths = $level->validity_months;
             }
 
+            $validityMonths = $level->validity_months;
 
             if (!$validityMonths || $validityMonths < 1) {
                 return back()->with(
@@ -254,7 +293,10 @@ class TransactionController extends Controller
 
             $startDate = now()->startOfDay();
 
+            // Renewals begin after the previous
+            // approved membership period.
             if ($transaction->transaction_type === 'Renewal') {
+
                 $previousTransaction = $member->membershipTransactions()
                     ->where('status', 'Approved')
                     ->where('id', '!=', $transaction->id)
@@ -300,20 +342,16 @@ class TransactionController extends Controller
     }
 
     // Cancel a pending transaction.
-    
-    // Cancel a pending transaction.
     public function cancel(MembershipTransaction $transaction)
     {
         return DB::transaction(function () use ($transaction) {
 
-            // Lock the transaction during cancellation.
             $transaction = MembershipTransaction::whereKey(
                 $transaction->id
             )
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Only pending transactions can be cancelled.
             if ($transaction->status !== 'Pending') {
                 return back()->with(
                     'error',
@@ -321,7 +359,6 @@ class TransactionController extends Controller
                 );
             }
 
-            // Prevent cancellation if payments already exist.
             if ($transaction->payments()->exists()) {
                 return back()->with(
                     'error',
@@ -329,8 +366,7 @@ class TransactionController extends Controller
                 );
             }
 
-            // Keep the transaction history, but release the
-            // application link for a possible replacement.
+            // Preserve the transaction record.
             $transaction->update([
                 'status' => 'Cancelled',
                 'membership_application_id' => null,
@@ -344,7 +380,6 @@ class TransactionController extends Controller
                 );
         });
     }
-
 
     // Display transaction history for a member.
     public function history(Member $member)
