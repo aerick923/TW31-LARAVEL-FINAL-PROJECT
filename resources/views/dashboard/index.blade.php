@@ -1,152 +1,116 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+@extends('layouts.admin')
 
-    <title>Administrator Dashboard</title>
+@section('title', 'Administrator Dashboard')
 
-    <link rel="stylesheet"
-          href="{{ asset('css/design.css') }}">
+@section('page-title', 'Dashboard Overview')
 
-    <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns:
-                repeat(auto-fit, minmax(210px, 1fr));
-            gap: 20px;
-            margin: 25px 0;
-        }
+@push('styles')
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(auto-fit, minmax(210px, 1fr));
+        gap: 20px;
+        margin: 25px 0;
+    }
 
-        .dashboard-stat {
-            background: #f5f2ff;
-            border: 1px solid #dcd3ff;
-            border-radius: 12px;
-            padding: 24px;
-        }
+    .dashboard-stat {
+        background: #ffffff;
+        border: 1px solid #dcd3ff;
+        border-radius: 12px;
+        padding: 24px;
+    }
 
-        .dashboard-stat h3 {
-            font-size: 15px;
-            color: #50429a;
-            margin-bottom: 12px;
-        }
+    .dashboard-stat h3 {
+        font-size: 15px;
+        color: #50429a;
+        margin-bottom: 12px;
+    }
 
-        .dashboard-stat .stat-value {
-            font-size: 30px;
-            font-weight: 700;
-            color: #28245e;
-        }
+    .dashboard-stat .stat-value {
+        font-size: 30px;
+        font-weight: 700;
+        color: #28245e;
+    }
 
-        .dashboard-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin: 20px 0 30px;
-        }
+    .dashboard-section {
+        margin-top: 30px;
+    }
 
-        .dashboard-section {
-            margin-top: 30px;
-        }
+    .dashboard-section h2 {
+        margin-bottom: 15px;
+    }
 
-        .dashboard-section h2 {
-            margin-bottom: 15px;
-        }
-    </style>
-</head>
+    .dashboard-table-card {
+        background: white;
+        border: 1px solid #dcd3ff;
+        border-radius: 12px;
+        padding: 25px;
+    }
 
-<body>
+    .dashboard-table-card .table-wrapper {
+        overflow-x: auto;
+    }
+</style>
+@endpush
 
-<header>
-    <h1>Administrator Dashboard</h1>
-    <p>Laravel Membership Management System</p>
-</header>
+@section('content')
 
-<main class="container members-container">
-    <div class="card">
+    <h2>Dashboard Overview</h2>
 
-        <h2>Dashboard Overview</h2>
+    <p>
+        Welcome, {{ auth()->user()->name }}!
+    </p>
 
-        <p>
-            Welcome,
-            {{ auth()->user()->name }}!
-        </p>
+    <!-- DASHBOARD STATISTICS -->
 
-        <div class="dashboard-grid">
+    <div class="dashboard-grid">
 
-            <div class="dashboard-stat">
-                <h3>Total Registered Members</h3>
+        <div class="dashboard-stat">
+            <h3>Total Registered Members</h3>
 
-                <div class="stat-value">
-                    {{ number_format($totalMembers) }}
-                </div>
-            </div>
-
-            <div class="dashboard-stat">
-                <h3>Active Members</h3>
-
-                <div class="stat-value">
-                    {{ number_format($activeMembers) }}
-                </div>
-            </div>
-
-            <div class="dashboard-stat">
-                <h3>Transactions Awaiting Processing</h3>
-
-                <div class="stat-value">
-                    {{ number_format($pendingTransactions) }}
-                </div>
-            </div>
-
-            <div class="dashboard-stat">
-                <h3>Total Payments Collected</h3>
-
-                <div class="stat-value">
-                    ₱{{ number_format($totalPayments, 2) }}
-                </div>
-            </div>
-
-        </div>
-
-        <div class="dashboard-section">
-            <h2>Quick Navigation</h2>
-
-            <div class="dashboard-links">
-
-                <a href="{{ route('members.index') }}"
-                   class="btn">
-                    Manage Members
-                </a>
-
-                <a href="{{ route('categories.index') }}"
-                   class="btn">
-                    Manage Categories
-                </a>
-
-                <a href="{{ route('levels.index') }}"
-                   class="btn">
-                    Manage Levels
-                </a>
-
-                <a href="{{ route('transactions.index') }}"
-                   class="btn">
-                    Manage Transactions
-                </a>
-
-
-<a href="{{ route('admin.applications.index') }}" class="btn">
-    Manage Applications
-</a>
-
-
+            <div class="stat-value">
+                {{ number_format($totalMembers) }}
             </div>
         </div>
 
-        <div class="dashboard-section">
+        <div class="dashboard-stat">
+            <h3>Active Members</h3>
+
+            <div class="stat-value">
+                {{ number_format($activeMembers) }}
+            </div>
+        </div>
+
+        <div class="dashboard-stat">
+            <h3>Transactions Awaiting Processing</h3>
+
+            <div class="stat-value">
+                {{ number_format($pendingTransactions) }}
+            </div>
+        </div>
+
+        <div class="dashboard-stat">
+            <h3>Total Payments Collected</h3>
+
+            <div class="stat-value">
+                ₱{{ number_format($totalPayments, 2) }}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RECENT TRANSACTIONS -->
+
+    <div class="dashboard-section">
+
+        <div class="dashboard-table-card">
+
             <h2>Recent Membership Transactions</h2>
 
             <div class="table-wrapper">
+
                 <table>
                     <thead>
                         <tr>
@@ -198,22 +162,11 @@
                         @endforelse
                     </tbody>
                 </table>
+
             </div>
-        </div>
 
-        <div class="dashboard-section">
-            <form action="{{ route('logout') }}"
-                  method="POST">
-                @csrf
-
-                <button type="submit" class="btn btn-gray">
-                    Logout
-                </button>
-            </form>
         </div>
 
     </div>
-</main>
 
-</body>
-</html>
+@endsection

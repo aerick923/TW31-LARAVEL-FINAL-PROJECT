@@ -1,119 +1,238 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@extends('layouts.admin')
 
-    <title>Register New Member</title>
+@section('title', 'Register New Member')
 
-    <link rel="stylesheet" href="{{ asset('css/design.css') }}">
-</head>
+@section('page-title', 'Register New Member')
 
-<body>
+@push('styles')
+<style>
+    .member-create-page {
+        max-width: 700px;
+        margin: 0 auto;
+    }
 
-<header>
-    <h1>Register New Member</h1>
-    <p>Enter the membership information below</p>
-</header>
+    .member-create-page .card {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 30px;
+    }
 
-<main class="member-form-container">
+    .member-create-page h2 {
+        color: #30236b;
+        margin-bottom: 10px;
+    }
+
+    .member-create-description {
+        color: #665a91;
+        margin-bottom: 25px;
+    }
+
+    .member-create-page .form-group {
+        margin-bottom: 20px;
+    }
+
+    .member-create-page label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #30236b;
+    }
+
+    .member-create-page input,
+    .member-create-page select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #dcd3ff;
+        border-radius: 8px;
+        background: white;
+        box-sizing: border-box;
+    }
+
+    .member-create-page input:focus,
+    .member-create-page select:focus {
+        outline: 2px solid #8b70ef;
+        outline-offset: 1px;
+    }
+
+    .member-create-page .member-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    @media (max-width: 768px) {
+        .member-create-page .card {
+            padding: 20px;
+        }
+    }
+</style>
+@endpush
+
+@section('content')
+
+<div class="member-create-page">
+
     <div class="card">
 
         <h2>Member Information</h2>
 
+        <p class="member-create-description">
+            Enter the membership information below.
+        </p>
+
         @if ($errors->any())
-            <div class="error-box">
+            <div class="error-box" role="alert">
                 Please correct the errors below.
             </div>
         @endif
 
-        <form action="{{ route('members.store') }}" method="POST">
+        <form action="{{ route('members.store') }}"
+              method="POST">
+
             @csrf
 
+            <!-- FULL NAME -->
+
             <div class="form-group">
+
                 <label for="name">Full Name</label>
 
-                <input type="text"
-                       id="name"
-                       name="name"
-                       value="{{ old('name') }}"
-                       required>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value="{{ old('name') }}"
+                    required
+                >
 
                 @error('name')
                     <div class="error">{{ $message }}</div>
                 @enderror
+
             </div>
 
+            <!-- EMAIL ADDRESS -->
+
             <div class="form-group">
+
                 <label for="email">Email Address</label>
 
-                <input type="email"
-                       id="email"
-                       name="email"
-                       value="{{ old('email') }}"
-                       required>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="{{ old('email') }}"
+                    required
+                >
 
                 @error('email')
                     <div class="error">{{ $message }}</div>
                 @enderror
+
             </div>
 
+            <!-- PHONE NUMBER -->
+
             <div class="form-group">
+
                 <label for="phone">Phone Number</label>
 
-                <input type="text"
-                       id="phone"
-                       name="phone"
-                       value="{{ old('phone') }}">
+                <input
+                    type="text"
+                    id="phone"
+                    name="phone"
+                    value="{{ old('phone') }}"
+                    inputmode="numeric"
+                    maxlength="11"
+                    pattern="09[0-9]{9}"
+                    placeholder="09XXXXXXXXX"
+                    title="Enter exactly 11 digits starting with 09."
+                >
 
                 @error('phone')
                     <div class="error">{{ $message }}</div>
                 @enderror
+
             </div>
 
-            <div class="form-group">
-                <label for="category">Membership Category</label>
+            <!-- MEMBERSHIP CATEGORY -->
 
-                <select id="category" name="category" required>
-                    <option value="">Select Category</option>
+            <div class="form-group">
+
+                <label for="category">
+                    Membership Category
+                </label>
+
+                <select id="category"
+                        name="category"
+                        required>
+
+                    <option value="">
+                        Select Category
+                    </option>
 
                     @foreach(['Student', 'Regular', 'Senior Citizen', 'Corporate'] as $category)
-                        <option value="{{ $category }}"
-                            {{ old('category') == $category ? 'selected' : '' }}>
+
+                        <option
+                            value="{{ $category }}"
+                            @selected(old('category') == $category)
+                        >
                             {{ $category }}
                         </option>
+
                     @endforeach
+
                 </select>
 
                 @error('category')
                     <div class="error">{{ $message }}</div>
                 @enderror
+
             </div>
 
-            
-<div class="form-group">
-    <label for="level">Membership Level</label>
+            <!-- MEMBERSHIP LEVEL -->
 
-    <select id="level" name="level" required>
-        <option value="">Select Level</option>
+            <div class="form-group">
 
-        @foreach($levels as $level)
-            <option value="{{ $level->name }}"
-                {{ old('level') == $level->name ? 'selected' : '' }}>
-                {{ $level->name }} —
-                ₱{{ number_format($level->fee, 2) }}
-            </option>
-        @endforeach
-    </select>
+                <label for="level">
+                    Membership Level
+                </label>
 
-    @error('level')
-        <div class="error">{{ $message }}</div>
-    @enderror
-</div>
+                <select id="level"
+                        name="level"
+                        required>
 
+                    <option value="">
+                        Select Level
+                    </option>
+
+                    @foreach($levels as $level)
+
+                        <option
+                            value="{{ $level->name }}"
+                            @selected(old('level') == $level->name)
+                        >
+                            {{ $level->name }} —
+                            ₱{{ number_format($level->fee, 2) }}
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+                @error('level')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+
+            </div>
+
+            <!-- FORM ACTIONS -->
 
             <div class="member-form-actions">
+
                 <button type="submit" class="btn">
                     Register Member
                 </button>
@@ -122,12 +241,13 @@
                    class="btn btn-gray">
                     Cancel
                 </a>
+
             </div>
 
         </form>
 
     </div>
-</main>
 
-</body>
-</html>
+</div>
+
+@endsection
