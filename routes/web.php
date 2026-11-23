@@ -19,6 +19,9 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\AdminMembershipApplicationController;
 
+use App\Http\Controllers\UserMembershipController;
+
+
 /*
 |--------------------------------------------------------------------------
 | 1. PUBLIC ROUTES
@@ -53,6 +56,26 @@ Route::post('/tasks', [TaskController::class, 'store'])
 */
 
 Route::middleware(['auth', 'regular', 'verified'])->group(function () {
+
+
+    // User membership details page.
+    Route::get(
+        '/user/membership',
+        [UserMembershipController::class, 'membership']
+    )->name('user.membership');
+
+    // User membership application history.
+    Route::get(
+        '/user/applications',
+        [UserMembershipController::class, 'applications']
+    )->name('user.applications');
+
+    // User transaction and payment history.
+    Route::get(
+        '/user/transactions',
+        [UserMembershipController::class, 'transactions']
+    )->name('user.transactions');
+
 
     // Display membership application form.
     Route::get(

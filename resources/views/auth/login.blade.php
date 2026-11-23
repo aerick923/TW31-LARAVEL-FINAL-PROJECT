@@ -177,11 +177,7 @@
             </p>
         </div>
 
-        <div class="login-footer">
-            <a href="{{ route('membership.create') }}">
-                Back to Membership Application
-            </a>
-        </div>
+        
 
     </div>
 

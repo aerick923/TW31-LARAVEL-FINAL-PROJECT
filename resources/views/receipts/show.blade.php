@@ -93,10 +93,21 @@
                 color: black;
             }
         }
+
+
+/* Hide decorative header elements on user receipts only */
+
+.user-receipt header::before,
+.user-receipt header::after {
+    content: none !important;
+    display: none !important;
+}
+
     </style>
 </head>
 
-<body>
+<body class="{{ auth()->user()->role === 'admin' ? 'admin-receipt' : 'user-receipt' }}">
+
 
 <header>
     <h1>Membership Transaction Receipt</h1>
