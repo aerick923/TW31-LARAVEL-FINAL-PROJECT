@@ -46,4 +46,22 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+
+public function tasks(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+{
+    return $this->belongsToMany(\App\Models\Task::class)
+        ->withPivot('id', 'completed', 'completed_at')
+        ->withTimestamps();
+}
+
+// A user can submit multiple membership applications.
+public function membershipApplications(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(
+        \App\Models\MembershipApplication::class,
+        'user_id'
+    );
+}
+
 }

@@ -7,12 +7,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MembershipCategory extends Model
 {
-    protected $fillable = [
-        'name',
-        'level',
-        'fee',
-        'is_active'
-    ];
+
+protected $fillable = [
+    'name',
+    'description',
+    'level',
+    'fee',
+    'is_active',
+];
+
 
     public function applications(): HasMany
     {

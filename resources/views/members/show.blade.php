@@ -1,31 +1,81 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@extends('layouts.admin')
 
-    <title>Member Profile</title>
+@section('title', 'Member Profile')
 
-    <link rel="stylesheet" href="{{ asset('css/design.css') }}">
-</head>
+@section('page-title', 'Member Profile')
 
-<body>
+@push('styles')
+<style>
+    .member-profile-page {
+        max-width: 750px;
+        margin: 0 auto;
+        width: 100%;
+    }
 
-<header>
-    <h1>Member Profile</h1>
-    <p>View complete membership information</p>
-</header>
+    .member-profile-page .card {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 30px;
+    }
 
-<main class="profile-container">
+    .member-profile-page h2 {
+        color: #30236b;
+        font-size: 24px;
+        margin-bottom: 25px;
+    }
+
+    .member-profile-page .detail {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 15px 0;
+        border-bottom: 1px solid #e5e0f5;
+    }
+
+    .member-profile-page .detail strong {
+        color: #50429a;
+        font-size: 14px;
+    }
+
+    .member-profile-page .detail span {
+        color: #28245e;
+        font-size: 15px;
+        overflow-wrap: anywhere;
+    }
+
+    .member-profile-page .profile-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 25px;
+    }
+
+    @media (max-width: 768px) {
+        .member-profile-page .card {
+            padding: 20px;
+        }
+    }
+</style>
+@endpush
+
+@section('content')
+
+<div class="member-profile-page">
+
     <div class="card">
 
         <h2>{{ $member->name }}</h2>
+
+        <!-- MEMBERSHIP NUMBER -->
 
         <div class="detail">
             <strong>Membership Number</strong>
             <span>{{ $member->membership_number }}</span>
         </div>
+
+        <!-- PERSONAL INFORMATION -->
 
         <div class="detail">
             <strong>Full Name</strong>
@@ -41,6 +91,8 @@
             <strong>Phone Number</strong>
             <span>{{ $member->phone ?: 'Not provided' }}</span>
         </div>
+
+        <!-- MEMBERSHIP INFORMATION -->
 
         <div class="detail">
             <strong>Membership Category</strong>
@@ -86,6 +138,8 @@
             @endif
         </div>
 
+        <!-- MEMBERSHIP STATUS -->
+
         <div class="detail">
             <strong>Membership Status</strong>
             <span>{{ $member->status }}</span>
@@ -93,10 +147,15 @@
 
         <div class="detail">
             <strong>Date Registered</strong>
-            <span>{{ $member->created_at->format('F d, Y') }}</span>
+            <span>
+                {{ $member->created_at->format('F d, Y') }}
+            </span>
         </div>
 
+        <!-- ACTION BUTTONS -->
+
         <div class="profile-actions">
+
             <a href="{{ route('members.edit', $member) }}"
                class="btn btn-orange">
                 Edit Member
@@ -106,10 +165,11 @@
                class="btn btn-gray">
                 Back to Members
             </a>
+
         </div>
 
     </div>
-</main>
 
-</body>
-</html>
+</div>
+
+@endsection

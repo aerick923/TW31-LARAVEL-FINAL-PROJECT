@@ -899,6 +899,35 @@ body.account-modal-open {
 </section>
 
 
+
+<!-- MY TASKS CARD -->
+<section class="dashboard-card" id="tasks">
+
+    <div class="dashboard-card-summary">
+
+        <div>
+            <div class="dashboard-card-title">
+                My Tasks
+            </div>
+
+            <div class="dashboard-card-description">
+                View tasks assigned to you by the administrator
+                and track your progress.
+            </div>
+        </div>
+
+        <a href="{{ route('user.tasks.index') }}"
+           class="dashboard-card-toggle dashboard-card-link">
+            View Tasks
+        </a>
+
+    </div>
+
+</section>
+
+
+
+
         
 <!-- MY ACCOUNT POPUP -->
 <div

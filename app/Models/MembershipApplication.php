@@ -8,19 +8,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MembershipApplication extends Model
 {
     protected $fillable = [
-        'user_id',
-        'member_id',
-        'membership_category_id',
-        'reference_no',
-        'full_name',
-        'email',
-        'phone',
-        'address',
-        'latitude',
-        'longitude',
-        'status',
-        'verification_sent_at',
-    ];
+    'user_id',
+    'member_id',
+    'membership_category_id',
+    'membership_level_id',
+    'reference_no',
+    'full_name',
+    'email',
+    'phone',
+    'address',
+    'latitude',
+    'longitude',
+    'status',
+    'verification_sent_at',
+];
 
     protected function casts(): array
     {
@@ -37,8 +38,26 @@ class MembershipApplication extends Model
         );
     }
 
-    public function member(): BelongsTo
+    // An application belongs to a membership level.
+public function membershipLevel(): BelongsTo
+{
+    return $this->belongsTo(
+        MembershipLevel::class,
+        'membership_level_id'
+    );
+}
+
+public function member(): BelongsTo
 {
     return $this->belongsTo(Member::class);
+
+
+}
+
+
+// An application may belong to a registered user account.
+public function user(): BelongsTo
+{
+    return $this->belongsTo(User::class, 'user_id');
 }
 }
