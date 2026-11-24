@@ -13,12 +13,10 @@
     };
 @endphp
 
-@if($isAdmin)
-    @extends('layouts.admin')
+@extends($isAdmin ? 'layouts.admin' : 'layouts.receipt-user')
 
-    @section('title', 'Membership Payment Receipt')
-    @section('page-title', 'Payment Receipt')
-@endif
+@section('title', 'Membership Payment Receipt')
+@section('page-title', 'Payment Receipt')
 
 @push('styles')
 <style>
@@ -500,41 +498,7 @@
 </style>
 @endpush
 
-@if($isAdmin)
-    @section('content')
-@endif
-
-@if(!$isAdmin)
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Membership Payment Receipt</title>
-    <link rel="stylesheet" href="{{ asset('css/design.css') }}">
-    @stack('styles')
-</head>
-<body>
-
-<div class="receipt-user-topbar">
-    <div class="receipt-user-topbar-inner">
-
-        <div class="receipt-user-brand">
-            <div class="receipt-user-logo">M</div>
-
-            <div>
-                <h2>MemberHub</h2>
-                <p>Membership Portal</p>
-            </div>
-        </div>
-
-        <span class="receipt-user-topbar-label">
-            Membership Payment Receipt
-        </span>
-
-    </div>
-</div>
-@endif
+@section('content')
 
 <div class="receipt-page">
 
@@ -745,9 +709,4 @@
 
 </div>
 
-@if($isAdmin)
-    @endsection
-@else
-</body>
-</html>
-@endif
+@endsection

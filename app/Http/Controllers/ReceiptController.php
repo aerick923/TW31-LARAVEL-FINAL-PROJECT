@@ -60,10 +60,12 @@ class ReceiptController extends Controller
             (float) $transaction->amount - (float) $totalPaid
         );
 
-        return view('receipts.show', compact(
-            'transaction',
-            'totalPaid',
-            'balance'
-        ));
+        
+return view('receipts.show', compact(
+    'transaction',
+    'totalPaid',
+    'balance'
+));
+
     }
 }
