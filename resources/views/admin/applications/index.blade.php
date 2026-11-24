@@ -268,6 +268,110 @@
             align-items: flex-start;
         }
     }
+
+
+/* Advanced Application Search */
+
+.applications-advanced-filter {
+    width: 100%;
+    background: #faf9ff;
+    border: 1px solid #e1d9ff;
+    border-radius: 12px;
+    padding: 22px;
+}
+
+.applications-advanced-filter label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #30236b;
+    margin-bottom: 8px;
+}
+
+.applications-advanced-filter input,
+.applications-advanced-filter select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #dcd3ff;
+    border-radius: 8px;
+    background: white;
+    color: #30236b;
+    font-size: 13px;
+}
+
+.application-search-field {
+    margin-bottom: 18px;
+}
+
+.application-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.application-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.applications-advanced-filter input:focus,
+.applications-advanced-filter select:focus {
+    outline: none;
+    border-color: #8064ed;
+    box-shadow: 0 0 0 3px rgba(128, 100, 237, 0.12);
+}
+
+@media (max-width: 768px) {
+    .application-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .applications-advanced-filter {
+        padding: 16px;
+    }
+}
+
+.applications-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+
+/* Application Review Navigation Buttons */
+
+.applications-page .application-view-btn,
+.applications-page .application-member-btn {
+    display: inline-block;
+    padding: 10px 13px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.applications-page .application-view-btn {
+    background: #8064ed;
+    color: #ffffff;
+}
+
+.applications-page .application-view-btn:hover {
+    background: #684bd3;
+}
+
+.applications-page .application-member-btn {
+    background: #eee9ff;
+    color: #30236b;
+}
+
+.applications-page .application-member-btn:hover {
+    background: #ddd3ff;
+}
+
 </style>
 @endpush
 
@@ -319,41 +423,88 @@
                 <strong>{{ $applications->total() }}</strong>
             </p>
 
-            <form method="GET"
-                  action="{{ route('admin.applications.index') }}"
-                  class="applications-filter">
+            
+<form method="GET"
+      action="{{ route('admin.applications.index') }}"
+      class="applications-advanced-filter">
 
-                <label for="status">Filter by Status:</label>
+    <div class="application-search-field">
+        <label for="application-search">
+            Search Applications
+        </label>
 
-                <select name="status" id="status">
-                    <option value="">All Applications</option>
+        <input
+            type="text"
+            id="application-search"
+            name="search"
+            value="{{ request('search') }}"
+            placeholder="Applicant name, email, or reference number"
+            maxlength="255"
+        >
+    </div>
 
-                    <option value="pending"
-                        @selected(request('status') === 'pending')>
-                        Pending
+    <div class="application-filter-grid">
+
+        <div>
+            <label for="status">Application Status</label>
+
+            <select name="status" id="status">
+                <option value="">All Statuses</option>
+
+                @foreach(['pending', 'approved', 'rejected'] as $status)
+                    <option value="{{ $status }}"
+                        @selected(request('status') === $status)>
+                        {{ ucfirst($status) }}
                     </option>
+                @endforeach
+            </select>
+        </div>
 
-                    <option value="approved"
-                        @selected(request('status') === 'approved')>
-                        Approved
+        <div>
+            <label for="category">Membership Category</label>
+
+            <select name="category" id="category">
+                <option value="">All Categories</option>
+
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}"
+                        @selected(request('category') == $category->id)>
+                        {{ $category->name }}
                     </option>
+                @endforeach
+            </select>
+        </div>
 
-                    <option value="rejected"
-                        @selected(request('status') === 'rejected')>
-                        Rejected
+        <div>
+            <label for="level">Membership Level</label>
+
+            <select name="level" id="level">
+                <option value="">All Levels</option>
+
+                @foreach($levels as $level)
+                    <option value="{{ $level->id }}"
+                        @selected(request('level') == $level->id)>
+                        {{ $level->name }}
                     </option>
-                </select>
+                @endforeach
+            </select>
+        </div>
 
-                <button type="submit" class="filter-btn">
-                    Apply Filter
-                </button>
+    </div>
 
-                <a href="{{ route('admin.applications.index') }}"
-                   class="clear-filter">
-                    Clear
-                </a>
+    <div class="application-filter-buttons">
+        <button type="submit" class="filter-btn">
+            Search Applications
+        </button>
 
-            </form>
+        <a href="{{ route('admin.applications.index') }}"
+           class="clear-filter">
+            Clear Filters
+        </a>
+    </div>
+
+</form>
+
         </div>
 
         @if($applications->isEmpty())
@@ -437,70 +588,30 @@
                                     {{ $application->created_at?->format('M d, Y') ?? 'N/A' }}
                                 </td>
 
-                                <td>
+                                
+<td>
+    <div class="review-actions">
 
-                                    @if($application->status === 'pending')
+        <!-- View the application before making a decision -->
+        <a href="{{ route('admin.applications.show', $application) }}"
+           class="application-view-btn">
+            View Application
+        </a>
 
-                                        <div class="review-actions">
+        <!-- View the linked member profile after approval -->
+        @if(
+            $application->status === 'approved' &&
+            $application->member_id
+        )
+            <a href="{{ route('members.show', $application->member_id) }}"
+               class="application-member-btn">
+                View Member
+            </a>
+        @endif
 
-                                            @if($application->membershipLevel)
+    </div>
+</td>
 
-                                                <form method="POST"
-                                                      action="{{ route('admin.applications.update-status', $application) }}"
-                                                      onsubmit="return confirm('Are you sure you want to approve this application?');">
-
-                                                    @csrf
-                                                    @method('PATCH')
-
-                                                    <input type="hidden"
-                                                           name="status"
-                                                           value="approved">
-
-                                                    <button type="submit"
-                                                            class="approve-btn">
-                                                        Approve
-                                                    </button>
-
-                                                </form>
-
-                                            @else
-
-                                                <span class="level-unavailable"
-                                                      title="This application has no selected membership level.">
-                                                    Approval Unavailable
-                                                </span>
-
-                                            @endif
-
-                                            <form method="POST"
-                                                  action="{{ route('admin.applications.update-status', $application) }}"
-                                                  onsubmit="return confirm('Are you sure you want to reject this application?');">
-
-                                                @csrf
-                                                @method('PATCH')
-
-                                                <input type="hidden"
-                                                       name="status"
-                                                       value="rejected">
-
-                                                <button type="submit"
-                                                        class="reject-btn">
-                                                    Reject
-                                                </button>
-
-                                            </form>
-
-                                        </div>
-
-                                    @else
-
-                                        <span class="review-completed">
-                                            Reviewed
-                                        </span>
-
-                                    @endif
-
-                                </td>
 
                             </tr>
 

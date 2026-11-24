@@ -4,47 +4,156 @@ namespace App\Http\Controllers;
 
 use App\Models\Member;
 use App\Models\MembershipApplication;
+use App\Models\MembershipCategory;
+use App\Models\MembershipLevel;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class AdminMembershipApplicationController extends Controller
 {
-    // Display membership applications for administrators.
+    /*
+    |--------------------------------------------------------------------------
+    | DISPLAY AND FILTER MEMBERSHIP APPLICATIONS
+    |--------------------------------------------------------------------------
+    */
+
     public function index(Request $request): View
     {
+        // Validate search and filter inputs.
+        $filters = $request->validate([
+            'search' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'status' => [
+                'nullable',
+                'in:pending,approved,rejected',
+            ],
+            'category' => [
+                'nullable',
+                'integer',
+                Rule::exists('membership_categories', 'id'),
+            ],
+            'level' => [
+                'nullable',
+                'integer',
+                Rule::exists('membership_levels', 'id'),
+            ],
+        ]);
+
+        // Retrieve applications with their relationships.
         $query = MembershipApplication::query()
-            ->with(['category', 'membershipLevel']);
+            ->with([
+                'category',
+                'membershipLevel',
+            ]);
 
-        if ($request->filled('status')) {
-            $status = $request->validate([
-                'status' => ['required', 'in:pending,approved,rejected'],
-            ])['status'];
+        // Search applications.
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
 
-            $query->where('status', $status);
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere(
+                        'reference_no',
+                        'like',
+                        "%{$search}%"
+                    );
+            });
         }
 
+        // Filter by application status.
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Filter by membership category.
+        if (!empty($filters['category'])) {
+            $query->where(
+                'membership_category_id',
+                $filters['category']
+            );
+        }
+
+        // Filter by membership level.
+        if (!empty($filters['level'])) {
+            $query->where(
+                'membership_level_id',
+                $filters['level']
+            );
+        }
+
+        // Paginate results while preserving filters.
         $applications = $query
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.applications.index', [
-            'applications' => $applications,
-        ]);
+        // Retrieve available categories and levels.
+        $categories = MembershipCategory::query()
+            ->orderBy('name')
+            ->get();
+
+        $levels = MembershipLevel::query()
+            ->orderBy('name')
+            ->get();
+
+        return view(
+            'admin.applications.index',
+            compact(
+                'applications',
+                'categories',
+                'levels'
+            )
+        );
     }
 
-    // Approve or reject a pending application.
+    /*
+    |--------------------------------------------------------------------------
+    | VIEW AN INDIVIDUAL MEMBERSHIP APPLICATION
+    |--------------------------------------------------------------------------
+    */
+
+    public function show(MembershipApplication $application): View
+    {
+        // Load the application category, membership level,
+        // and linked member record.
+        $application->load([
+            'category',
+            'membershipLevel',
+            'member',
+        ]);
+
+        // Display the application review page.
+        return view(
+            'admin.applications.show',
+            compact('application')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | APPROVE OR REJECT A MEMBERSHIP APPLICATION
+    |--------------------------------------------------------------------------
+    */
+
     public function updateStatus(
         Request $request,
         MembershipApplication $application
     ): RedirectResponse {
 
         $validated = $request->validate([
-            'status' => ['required', 'in:approved,rejected'],
+            'status' => [
+                'required',
+                'in:approved,rejected',
+            ],
         ]);
 
         DB::transaction(function () use ($application, $validated) {
@@ -55,9 +164,11 @@ class AdminMembershipApplicationController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Only pending applications can be reviewed.
             if ($application->status !== 'pending') {
                 throw ValidationException::withMessages([
-                    'status' => 'Only pending applications can be reviewed.',
+                    'status' =>
+                        'Only pending applications can be reviewed.',
                 ]);
             }
 
@@ -73,7 +184,7 @@ class AdminMembershipApplicationController extends Controller
                     ]);
                 }
 
-                // Retrieve the independently selected membership level.
+                // Retrieve the selected membership level.
                 $membershipLevel = $application->membershipLevel;
 
                 if (!$membershipLevel) {
@@ -107,7 +218,7 @@ class AdminMembershipApplicationController extends Controller
                     )->exists()
                 );
 
-                // Create the member using the selected category
+                // Create a member using the selected category
                 // and membership level.
                 $member = Member::create([
                     'membership_number' => $membershipNumber,

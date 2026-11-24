@@ -226,6 +226,14 @@
                 Transactions
             </a>
 
+            
+<!-- Administrator Payments -->
+<a href="{{ route('payments.index') }}"
+   class="{{ request()->routeIs('payments.*') ? 'active' : '' }}">
+    Payments
+</a>
+
+
             <a href="{{ route('tasks.index') }}"
    class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">
     Tasks

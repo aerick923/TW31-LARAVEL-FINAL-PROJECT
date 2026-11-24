@@ -3,15 +3,111 @@
 namespace App\Http\Controllers;
 
 use App\Models\MembershipTransaction;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class PaymentController extends Controller
 {
-    // Show the payment recording form.
+    /*
+    |--------------------------------------------------------------------------
+    | DISPLAY AND FILTER RECORDED PAYMENTS
+    |--------------------------------------------------------------------------
+    */
+
+    public function index(Request $request): View
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'payment_method' => [
+                'nullable',
+                Rule::in(['Cash', 'GCash', 'Bank Transfer']),
+            ],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
+
+        // Retrieve payments and their related transactions and members.
+        $query = Payment::query()
+            ->with([
+                'membershipTransaction.member',
+            ]);
+
+        // Search payment references, transaction references,
+        // membership numbers, and member names.
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+
+            $query->where(function ($q) use ($search) {
+                $q->where('payment_reference', 'like', "%{$search}%")
+                    ->orWhereHas(
+                        'membershipTransaction',
+                        function ($transactionQuery) use ($search) {
+                            $transactionQuery
+                                ->where('reference_number', 'like', "%{$search}%")
+                                ->orWhereHas(
+                                    'member',
+                                    function ($memberQuery) use ($search) {
+                                        $memberQuery
+                                            ->where('name', 'like', "%{$search}%")
+                                            ->orWhere(
+                                                'membership_number',
+                                                'like',
+                                                "%{$search}%"
+                                            );
+                                    }
+                                );
+                        }
+                    );
+            });
+        }
+
+        // Filter by payment method.
+        if (!empty($filters['payment_method'])) {
+            $query->where(
+                'payment_method',
+                $filters['payment_method']
+            );
+        }
+
+        // Filter by starting payment date.
+        if (!empty($filters['date_from'])) {
+            $query->whereDate(
+                'payment_date',
+                '>=',
+                $filters['date_from']
+            );
+        }
+
+        // Filter by ending payment date.
+        if (!empty($filters['date_to'])) {
+            $query->whereDate(
+                'payment_date',
+                '<=',
+                $filters['date_to']
+            );
+        }
+
+        // Retrieve the matching payment records.
+        $payments = $query
+            ->orderByDesc('payment_date')
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('payments.index', compact('payments'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DISPLAY PAYMENT RECORDING FORM
+    |--------------------------------------------------------------------------
+    */
+
     public function create(MembershipTransaction $transaction)
     {
         $transaction->load(['member', 'payments']);
@@ -19,7 +115,10 @@ class PaymentController extends Controller
         $totalPaid = $transaction->payments->sum('amount');
 
         $balance = round(
-            max(0, (float) $transaction->amount - (float) $totalPaid),
+            max(
+                0,
+                (float) $transaction->amount - (float) $totalPaid
+            ),
             2
         );
 
@@ -30,7 +129,12 @@ class PaymentController extends Controller
         ));
     }
 
-    // Record a payment for a membership transaction.
+    /*
+    |--------------------------------------------------------------------------
+    | RECORD A PAYMENT
+    |--------------------------------------------------------------------------
+    */
+
     public function store(
         Request $request,
         MembershipTransaction $transaction
@@ -65,7 +169,8 @@ class PaymentController extends Controller
             // Only pending transactions can receive payments.
             if ($transaction->status !== 'Pending') {
                 throw ValidationException::withMessages([
-                    'amount' => 'Payments can only be recorded for pending transactions.',
+                    'amount' =>
+                        'Payments can only be recorded for pending transactions.',
                 ]);
             }
 
@@ -90,7 +195,8 @@ class PaymentController extends Controller
                 $newPaymentCents > $remainingCents
             ) {
                 throw ValidationException::withMessages([
-                    'amount' => 'Payment exceeds the remaining balance.',
+                    'amount' =>
+                        'Payment exceeds the remaining balance.',
                 ]);
             }
 

@@ -284,7 +284,18 @@ Route::patch(
 
 Route::middleware(['auth', 'admin'])->group(function () {
 
+/*
+|--------------------------------------------------------------------------
+| ADMINISTRATOR PAYMENT MANAGEMENT
+|--------------------------------------------------------------------------
+*/
 
+// Display and filter recorded payments.
+Route::get(
+    '/payments',
+    [PaymentController::class, 'index']
+)->name('payments.index');
+   
     /*
     |--------------------------------------------------------------------------
     | ADMINISTRATOR TASK MANAGEMENT
@@ -292,37 +303,55 @@ Route::middleware(['auth', 'admin'])->group(function () {
     */
 
     // Display all tasks.
-    Route::get('/tasks', [TaskController::class, 'index'])
-        ->name('tasks.index');
+    Route::get(
+        '/tasks',
+        [TaskController::class, 'index']
+    )->name('tasks.index');
 
     // Create a task.
-    Route::post('/tasks', [TaskController::class, 'store'])
-        ->name('tasks.store');
-
+    Route::post(
+        '/tasks',
+        [TaskController::class, 'store']
+    )->name('tasks.store');
 
     // Display the task editing form.
-    Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])
-        ->name('tasks.edit');
+    Route::get(
+        '/tasks/{task}/edit',
+        [TaskController::class, 'edit']
+    )->name('tasks.edit');
 
     // Update an existing task.
-    Route::put('/tasks/{task}', [TaskController::class, 'update'])
-        ->name('tasks.update');
+    Route::put(
+        '/tasks/{task}',
+        [TaskController::class, 'update']
+    )->name('tasks.update');
 
     // Delete an existing task.
-    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])
-        ->name('tasks.destroy');
+    Route::delete(
+        '/tasks/{task}',
+        [TaskController::class, 'destroy']
+    )->name('tasks.destroy');
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | ADMINISTRATOR MEMBERSHIP APPLICATIONS
+    |--------------------------------------------------------------------------
+    */
 
-
-    // Administrator Membership Applications
+    // Display and filter membership applications.
     Route::get(
         '/admin/membership-applications',
         [AdminMembershipApplicationController::class, 'index']
     )->name('admin.applications.index');
 
+    // View an individual membership application.
+    Route::get(
+        '/admin/membership-applications/{application}',
+        [AdminMembershipApplicationController::class, 'show']
+    )->name('admin.applications.show');
 
-    // Approve or reject a membership application.
+    // Approve or reject a pending membership application.
     Route::patch(
         '/admin/membership-applications/{application}/status',
         [AdminMembershipApplicationController::class, 'updateStatus']
@@ -335,10 +364,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    // Display the administrator dashboard.
     Route::get(
         '/dashboard',
         [DashboardController::class, 'index']
     )->name('dashboard.index');
+
 
 
     /*
