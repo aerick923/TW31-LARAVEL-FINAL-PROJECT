@@ -68,7 +68,6 @@
         text-decoration: none;
         cursor: pointer;
         white-space: nowrap;
-        transition: background 0.2s ease;
     }
 
     .category-btn-purple {
@@ -101,16 +100,6 @@
         color: #ffffff;
     }
 
-    .category-btn-danger {
-        background: #dc2626;
-        color: #ffffff;
-    }
-
-    .category-btn-danger:hover {
-        background: #b91c1c;
-        color: #ffffff;
-    }
-
     .category-table-wrapper {
         width: 100%;
         overflow-x: auto;
@@ -134,7 +123,6 @@
         text-align: left;
         color: #30236b;
         font-weight: 700;
-        white-space: nowrap;
     }
 
     .category-table td {
@@ -152,30 +140,6 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .category-actions form {
-        display: inline-flex;
-        margin: 0;
-    }
-
-    .category-status {
-        display: inline-block;
-        padding: 7px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .category-status-active {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .category-status-inactive {
-        background: #fee2e2;
-        color: #991b1b;
     }
 
     .category-alert-success {
@@ -216,7 +180,7 @@
         }
 
         .category-table {
-            min-width: 750px;
+            min-width: 650px;
         }
     }
 </style>
@@ -226,35 +190,27 @@
 
 <div class="category-page">
 
-    <!-- PAGE HEADING -->
     <div class="category-heading">
         <h1>Membership Categories</h1>
-
-        <p>
-            Manage membership categories and their information.
-        </p>
+        <p>Manage membership categories and their descriptions.</p>
     </div>
 
-    <!-- CATEGORY MANAGEMENT CARD -->
     <div class="category-card">
 
         <h2>Membership Categories</h2>
 
-        <!-- SUCCESS MESSAGE -->
         @if(session('success'))
             <div class="category-alert-success" role="status">
                 {{ session('success') }}
             </div>
         @endif
 
-        <!-- ERROR MESSAGE -->
         @if(session('error'))
             <div class="category-alert-error" role="alert">
                 {{ session('error') }}
             </div>
         @endif
 
-        <!-- VALIDATION ERRORS -->
         @if($errors->any())
             <div class="category-alert-error" role="alert">
                 <ul>
@@ -265,26 +221,17 @@
             </div>
         @endif
 
-        <!-- ACTION BUTTONS -->
         <div class="category-toolbar">
 
-            <a
-                href="{{ route('members.index') }}"
-                class="category-btn category-btn-gray"
-            >
-                Back to Members
-            </a>
+            
 
-            <a
-                href="{{ route('categories.create') }}"
-                class="category-btn category-btn-green"
-            >
+            <a href="{{ route('categories.create') }}"
+               class="category-btn category-btn-green">
                 + Add Category
             </a>
 
         </div>
 
-        <!-- CATEGORY TABLE -->
         <div class="category-table-wrapper">
 
             <table class="category-table">
@@ -292,102 +239,43 @@
                 <thead>
                     <tr>
                         <th>Category</th>
-                        <th>Level</th>
-                        <th>Fee</th>
-                        <th>Status</th>
+                        <th>Description</th>
+                        <th>Members</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
-
                     @forelse($categories as $category)
 
                         <tr>
+                            <td>{{ $category->name }}</td>
 
-                            <!-- CATEGORY NAME -->
                             <td>
-                                {{ $category->name }}
+                                {{ $category->description ?: 'No description provided.' }}
                             </td>
 
-                            <!-- CATEGORY LEVEL -->
                             <td>
-                                {{ $category->level ?? 'Not specified' }}
+                                {{ \App\Models\Member::where('category', $category->name)->count() }}
                             </td>
 
-                            <!-- CATEGORY FEE -->
                             <td>
-                                ₱{{ number_format($category->fee ?? 0, 2) }}
-                            </td>
-
-                            <!-- CATEGORY STATUS -->
-                            <td>
-
-                                @if($category->is_active)
-
-                                    <span class="category-status category-status-active">
-                                        Active
-                                    </span>
-
-                                @else
-
-                                    <span class="category-status category-status-inactive">
-                                        Inactive
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-                            <!-- CATEGORY ACTIONS -->
-                            <td>
-
                                 <div class="category-actions">
-
-                                    <a
-                                        href="{{ route('categories.edit', $category) }}"
-                                        class="category-btn category-btn-purple"
-                                    >
+                                    <a href="{{ route('categories.edit', $category) }}"
+                                       class="category-btn category-btn-purple">
                                         Edit
                                     </a>
-
-                                    @if($category->is_active)
-
-                                        <form
-                                            action="{{ route('categories.destroy', $category) }}"
-                                            method="POST"
-                                            onsubmit="return confirm('Are you sure you want to deactivate this category?');"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button
-                                                type="submit"
-                                                class="category-btn category-btn-danger"
-                                            >
-                                                Deactivate
-                                            </button>
-
-                                        </form>
-
-                                    @endif
-
                                 </div>
-
                             </td>
-
                         </tr>
 
                     @empty
-
                         <tr>
-                            <td colspan="5" class="category-empty">
+                            <td colspan="4" class="category-empty">
                                 No membership categories found.
                             </td>
                         </tr>
-
                     @endforelse
-
                 </tbody>
 
             </table>

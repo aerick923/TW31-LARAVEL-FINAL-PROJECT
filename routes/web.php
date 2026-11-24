@@ -20,6 +20,7 @@ use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\AdminMembershipApplicationController;
 
 use App\Http\Controllers\UserMembershipController;
+use App\Http\Controllers\UserTaskController;
 
 
 /*
@@ -36,14 +37,7 @@ Route::get('/', function () {
 // About page
 Route::get('/about', [PageController::class, 'about']);
 
-// Task Manager
-Route::get('/tasks/{id}', [PageController::class, 'task']);
 
-Route::get('/tasks', [TaskController::class, 'index'])
-    ->name('tasks.index');
-
-Route::post('/tasks', [TaskController::class, 'store'])
-    ->name('tasks.store');
 
 
 /*
@@ -209,15 +203,21 @@ Route::middleware([
     'verified',
 ])->group(function () {
 
-
     // Allow regular users to view only their own receipts.
     Route::get(
         '/user/transactions/{transaction}/receipt',
         [ReceiptController::class, 'showUserReceipt']
     )->name('user.transactions.receipt');
 
+Route::get('/user/tasks', [UserTaskController::class, 'index'])
+    ->name('user.tasks.index');
 
-   
+
+Route::patch(
+    '/user/tasks/{task}/complete',
+    [UserTaskController::class, 'complete']
+)->name('user.tasks.complete');
+
     
     // User Dashboard
     Route::get('/user/dashboard', function () {
@@ -283,6 +283,36 @@ Route::middleware([
 */
 
 Route::middleware(['auth', 'admin'])->group(function () {
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADMINISTRATOR TASK MANAGEMENT
+    |--------------------------------------------------------------------------
+    */
+
+    // Display all tasks.
+    Route::get('/tasks', [TaskController::class, 'index'])
+        ->name('tasks.index');
+
+    // Create a task.
+    Route::post('/tasks', [TaskController::class, 'store'])
+        ->name('tasks.store');
+
+
+    // Display the task editing form.
+    Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])
+        ->name('tasks.edit');
+
+    // Update an existing task.
+    Route::put('/tasks/{task}', [TaskController::class, 'update'])
+        ->name('tasks.update');
+
+    // Delete an existing task.
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])
+        ->name('tasks.destroy');
+
+
 
 
     // Administrator Membership Applications

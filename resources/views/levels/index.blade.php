@@ -213,10 +213,7 @@
 
         <div class="levels-toolbar">
 
-            <a href="{{ route('members.index') }}"
-               class="levels-btn levels-btn-gray">
-                Back to Members
-            </a>
+            
 
             <a href="{{ route('levels.create') }}"
                class="levels-btn levels-btn-green">

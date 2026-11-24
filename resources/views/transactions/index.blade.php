@@ -254,12 +254,7 @@
 
         <div class="transactions-toolbar">
 
-            <div class="transactions-toolbar-actions">
-                <a href="{{ route('members.index') }}"
-                   class="transaction-btn transaction-btn-secondary">
-                    Back to Members
-                </a>
-            </div>
+            
 
             <a href="{{ route('transactions.create') }}"
                class="transaction-btn transaction-btn-green">

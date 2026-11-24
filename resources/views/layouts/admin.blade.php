@@ -226,6 +226,11 @@
                 Transactions
             </a>
 
+            <a href="{{ route('tasks.index') }}"
+   class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">
+    Tasks
+</a>
+
         </nav>
 
         <div class="sidebar-logout">

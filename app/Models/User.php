@@ -46,4 +46,13 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+
+public function tasks(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+{
+    return $this->belongsToMany(\App\Models\Task::class)
+        ->withPivot('id', 'completed', 'completed_at')
+        ->withTimestamps();
+}
+
 }

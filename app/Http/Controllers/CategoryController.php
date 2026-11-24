@@ -25,37 +25,48 @@ class CategoryController extends Controller
     }
 
     // Save a new membership category.
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('membership_categories', 'name'),
-            ],
-            'description' => [
-                'nullable',
-                'string',
-                'max:5000',
-            ],
-        ]);
+   
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => [
+            'required',
+            'string',
+            'max:255',
+            Rule::unique('membership_categories', 'name'),
+        ],
+        'description' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+        'level' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+        'is_active' => [
+            'required',
+            'boolean',
+        ],
+    ]);
 
-        MembershipCategory::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'level' => null,
-            'fee' => 0,
-            'is_active' => true,
-        ]);
+    MembershipCategory::create([
+        'name' => $validated['name'],
+        'description' => $validated['description'] ?? null,
+        'level' => $validated['level'] ?? null,
+        'fee' => 0,
+        'is_active' => $validated['is_active'],
+    ]);
 
-        return redirect()
-            ->route('categories.index')
-            ->with(
-                'success',
-                'Membership category created successfully!'
-            );
-    }
+    return redirect()
+        ->route('categories.index')
+        ->with(
+            'success',
+            'Membership category created successfully!'
+        );
+}
+
 
     // Display the category editing form.
     public function edit(MembershipCategory $category)
@@ -63,38 +74,50 @@ class CategoryController extends Controller
         return view('categories.edit', compact('category'));
     }
 
-    // Update an existing membership category.
-    public function update(
-        Request $request,
-        MembershipCategory $category
-    ) {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('membership_categories', 'name')
-                    ->ignore($category->id),
-            ],
-            'description' => [
-                'nullable',
-                'string',
-                'max:5000',
-            ],
-        ]);
+    
+public function update(
+    Request $request,
+    MembershipCategory $category
+) {
+    $validated = $request->validate([
+        'name' => [
+            'required',
+            'string',
+            'max:255',
+            Rule::unique('membership_categories', 'name')
+                ->ignore($category->id),
+        ],
+        'description' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+        'level' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+        'is_active' => [
+            'required',
+            'boolean',
+        ],
+    ]);
 
-        $category->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-        ]);
+    $category->update([
+        'name' => $validated['name'],
+        'description' => $validated['description'] ?? null,
+        'level' => $validated['level'] ?? null,
+        'is_active' => $validated['is_active'],
+    ]);
 
-        return redirect()
-            ->route('categories.index')
-            ->with(
-                'success',
-                'Membership category updated successfully!'
-            );
-    }
+    return redirect()
+        ->route('categories.index')
+        ->with(
+            'success',
+            'Membership category updated successfully!'
+        );
+}
+
 
     // Preserve existing category records.
     // Deactivation and deletion are disabled.
