@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\MembershipPaymentReceipt;
 use App\Models\MembershipTransaction;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -28,45 +31,54 @@ class PaymentController extends Controller
                 Rule::in(['Cash', 'GCash', 'Bank Transfer']),
             ],
             'date_from' => ['nullable', 'date'],
-            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'date_to' => [
+                'nullable',
+                'date',
+                'after_or_equal:date_from',
+            ],
         ]);
 
-        // Retrieve payments and their related transactions and members.
         $query = Payment::query()
-            ->with([
-                'membershipTransaction.member',
-            ]);
+            ->with(['membershipTransaction.member']);
 
-        // Search payment references, transaction references,
-        // membership numbers, and member names.
         if (!empty($filters['search'])) {
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
-                $q->where('payment_reference', 'like', "%{$search}%")
-                    ->orWhereHas(
-                        'membershipTransaction',
-                        function ($transactionQuery) use ($search) {
-                            $transactionQuery
-                                ->where('reference_number', 'like', "%{$search}%")
-                                ->orWhereHas(
-                                    'member',
-                                    function ($memberQuery) use ($search) {
-                                        $memberQuery
-                                            ->where('name', 'like', "%{$search}%")
-                                            ->orWhere(
-                                                'membership_number',
-                                                'like',
-                                                "%{$search}%"
-                                            );
-                                    }
-                                );
-                        }
-                    );
+                $q->where(
+                    'payment_reference',
+                    'like',
+                    "%{$search}%"
+                )->orWhereHas(
+                    'membershipTransaction',
+                    function ($transactionQuery) use ($search) {
+                        $transactionQuery
+                            ->where(
+                                'reference_number',
+                                'like',
+                                "%{$search}%"
+                            )
+                            ->orWhereHas(
+                                'member',
+                                function ($memberQuery) use ($search) {
+                                    $memberQuery
+                                        ->where(
+                                            'name',
+                                            'like',
+                                            "%{$search}%"
+                                        )
+                                        ->orWhere(
+                                            'membership_number',
+                                            'like',
+                                            "%{$search}%"
+                                        );
+                                }
+                            );
+                    }
+                );
             });
         }
 
-        // Filter by payment method.
         if (!empty($filters['payment_method'])) {
             $query->where(
                 'payment_method',
@@ -74,7 +86,6 @@ class PaymentController extends Controller
             );
         }
 
-        // Filter by starting payment date.
         if (!empty($filters['date_from'])) {
             $query->whereDate(
                 'payment_date',
@@ -83,7 +94,6 @@ class PaymentController extends Controller
             );
         }
 
-        // Filter by ending payment date.
         if (!empty($filters['date_to'])) {
             $query->whereDate(
                 'payment_date',
@@ -92,7 +102,6 @@ class PaymentController extends Controller
             );
         }
 
-        // Retrieve the matching payment records.
         $payments = $query
             ->orderByDesc('payment_date')
             ->orderByDesc('id')
@@ -131,7 +140,7 @@ class PaymentController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | RECORD A PAYMENT
+    | RECORD PAYMENT AND SEND EMAIL RECEIPT
     |--------------------------------------------------------------------------
     */
 
@@ -157,30 +166,32 @@ class PaymentController extends Controller
             ],
         ]);
 
-        DB::transaction(function () use ($transaction, $validated) {
-
-            // Lock the transaction while recording payment.
-            $transaction = MembershipTransaction::whereKey(
-                $transaction->id
-            )
+        // Save the payment and update its transaction atomically.
+        $payment = DB::transaction(function () use (
+            $transaction,
+            $validated
+        ) {
+            $lockedTransaction = MembershipTransaction::query()
+                ->whereKey($transaction->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Only pending transactions can receive payments.
-            if ($transaction->status !== 'Pending') {
+            if ($lockedTransaction->status !== 'Pending') {
                 throw ValidationException::withMessages([
                     'amount' =>
                         'Payments can only be recorded for pending transactions.',
                 ]);
             }
 
-            // Calculate amounts in cents to avoid rounding errors.
+            // Calculate using centavos to avoid rounding errors.
             $requiredCents = (int) round(
-                (float) $transaction->amount * 100
+                (float) $lockedTransaction->amount * 100
             );
 
             $paidCents = (int) round(
-                (float) $transaction->payments()->sum('amount') * 100
+                (float) $lockedTransaction
+                    ->payments()
+                    ->sum('amount') * 100
             );
 
             $newPaymentCents = (int) round(
@@ -189,7 +200,6 @@ class PaymentController extends Controller
 
             $remainingCents = $requiredCents - $paidCents;
 
-            // Reject overpayments and invalid balances.
             if (
                 $remainingCents <= 0 ||
                 $newPaymentCents > $remainingCents
@@ -202,31 +212,104 @@ class PaymentController extends Controller
 
             // Generate a unique payment reference.
             do {
-                $reference = 'PAY-' . strtoupper(Str::random(10));
+                $reference = 'PAY-' .
+                    strtoupper(Str::random(10));
             } while (
                 DB::table('payments')
                     ->where('payment_reference', $reference)
                     ->exists()
             );
 
-            // Record the payment through the relationship.
-            $transaction->payments()->create([
+            // Create the payment record.
+            $payment = $lockedTransaction->payments()->create([
                 'payment_reference' => $reference,
                 'amount' => $validated['amount'],
                 'payment_method' => $validated['payment_method'],
                 'payment_date' => $validated['payment_date'],
             ]);
 
-            // Mark transaction Paid once the full fee is covered.
-            if ($paidCents + $newPaymentCents === $requiredCents) {
-                $transaction->update([
+            // Mark the transaction Paid when fully settled.
+            if (
+                $paidCents + $newPaymentCents === $requiredCents
+            ) {
+                $lockedTransaction->update([
                     'status' => 'Paid',
                 ]);
             }
+
+            return $payment;
         });
 
+        /*
+        |--------------------------------------------------------------------------
+        | EMAIL THE PAYMENT RECEIPT
+        |--------------------------------------------------------------------------
+        |
+        | The database transaction has already committed.
+        | An email failure must not undo the recorded payment.
+        |
+        */
+
+        $payment->load('membershipTransaction.member');
+
+        $member = $payment->membershipTransaction?->member;
+
+        $emailStatus = null;
+
+        if ($member && filter_var(
+            $member->email,
+            FILTER_VALIDATE_EMAIL
+        )) {
+            try {
+                Mail::to($member->email)->send(
+                    new MembershipPaymentReceipt($payment)
+                );
+
+                $emailStatus = 'sent';
+            } catch (\Throwable $exception) {
+                Log::error('Payment receipt email failed.', [
+                    'payment_id' => $payment->id,
+                    'transaction_id' =>
+                        $payment->membership_transaction_id,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                $emailStatus = 'failed';
+            }
+        } else {
+            Log::warning(
+                'Payment receipt email skipped: missing or invalid member email.',
+                [
+                    'payment_id' => $payment->id,
+                    'transaction_id' =>
+                        $payment->membership_transaction_id,
+                ]
+            );
+
+            $emailStatus = 'skipped';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT TO TRANSACTION DETAILS
+        |--------------------------------------------------------------------------
+        */
+
+        $message = 'Payment recorded successfully!';
+
+        if ($emailStatus === 'sent') {
+            $message .= ' Email receipt sent successfully.';
+        } elseif ($emailStatus === 'failed') {
+            $message .= ' However, the email receipt could not be sent.';
+        } else {
+            $message .= ' No valid member email was available for the receipt.';
+        }
+
         return redirect()
-            ->route('transactions.show', $transaction)
-            ->with('success', 'Payment recorded successfully!');
+            ->route(
+                'transactions.show',
+                $transaction
+            )
+            ->with('success', $message);
     }
 }
