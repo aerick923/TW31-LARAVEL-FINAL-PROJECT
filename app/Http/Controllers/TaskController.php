@@ -44,6 +44,7 @@ class TaskController extends Controller
             $task = Task::create([
                 'task_title' => $validated['task_title'],
                 'description' => $validated['description'] ?? null,
+                'completed' => false,
             ]);
 
             $task->users()->attach($validated['users']);
@@ -57,6 +58,15 @@ class TaskController extends Controller
     // Display the task editing form.
     public function edit(Task $task)
     {
+
+    if ($task->users()->exists()
+    && !$task->users()
+        ->wherePivot('completed', false)
+        ->exists()) {
+    return redirect()
+        ->route('tasks.index')
+        ->with('success', 'Completed tasks cannot be edited.');
+}
         $task->load('users');
 
         $users = User::where('role', 'user')
@@ -83,14 +93,36 @@ class TaskController extends Controller
         ]);
 
         DB::transaction(function () use ($task, $validated) {
+
+            // Lock the task while updating assignments.
+            $task = Task::whereKey($task->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            // Update task information.
             $task->update([
                 'task_title' => $validated['task_title'],
                 'description' => $validated['description'] ?? null,
             ]);
 
-            // Keep existing users' completion records.
-            // Add newly selected users and remove unselected users.
+            // Preserve existing users' completion records.
+            // Add new assignments and remove unselected users.
             $task->users()->sync($validated['users']);
+
+            // Count all assigned users.
+            $totalAssigned = $task->users()->count();
+
+            // Count users who completed their assignments.
+            $totalCompleted = $task->users()
+                ->wherePivot('completed', true)
+                ->count();
+
+            // Mark the task completed only when all
+            // currently assigned users have finished.
+            $task->update([
+                'completed' => $totalAssigned > 0
+                    && $totalCompleted === $totalAssigned,
+            ]);
         });
 
         return redirect()

@@ -266,15 +266,25 @@
 
                         <h3>{{ $task->task_title }}</h3>
 
-                        @if($task->completed)
-                            <span class="task-status completed">
-                                Completed
-                            </span>
-                        @else
-                            <span class="task-status">
-                                In Progress
-                            </span>
-                        @endif
+
+
+@php
+    $totalAssigned = $task->users->count();
+
+    $totalCompleted = $task->users
+        ->filter(fn ($user) => (bool) $user->pivot->completed)
+        ->count();
+
+    $taskStatus = $totalAssigned > 0
+        && $totalCompleted === $totalAssigned
+            ? 'Completed'
+            : 'In Progress';
+@endphp
+
+<span class="task-status {{ $taskStatus === 'Completed' ? 'completed' : '' }}">
+    {{ $taskStatus }}
+</span>
+
 
                     </div>
 
@@ -342,10 +352,14 @@
 
                     <div class="task-actions">
 
-                        <a href="{{ route('tasks.edit', $task) }}"
-                           class="btn">
-                            Edit
-                        </a>
+
+@if($taskStatus !== 'Completed')
+    <a href="{{ route('tasks.edit', $task) }}"
+       class="btn">
+        Edit
+    </a>
+@endif
+
 
                         <form action="{{ route('tasks.destroy', $task) }}"
                               method="POST"

@@ -12,6 +12,12 @@
           href="{{ asset('css/design.css') }}">
 
     <style>
+
+
+.admin-sidebar-close {
+    display: none;
+}
+
         * {
             box-sizing: border-box;
         }
@@ -138,33 +144,68 @@
             max-width: none;
         }
 
-        .admin-menu-toggle {
-            display: none;
-            border: 1px solid #ddd6fe;
-            background: #f5f2ff;
-            color: #30236b;
-            border-radius: 8px;
-            padding: 9px 12px;
-            cursor: pointer;
-        }
+
+.admin-menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border: 1px solid #ddd6fe;
+    background: #f5f2ff;
+    color: #30236b;
+    border-radius: 8px;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
 
         @media (max-width: 768px) {
             .admin-layout {
                 display: block;
             }
 
-            .admin-sidebar {
-                display: none;
-                width: 100%;
-            }
+.admin-sidebar-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-end;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+    border: 1px solid #8170b7;
+    border-radius: 8px;
+    background: transparent;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+}
 
-            .admin-sidebar.open {
-                display: flex;
-            }
+
+.admin-sidebar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, 85vw);
+    height: 100dvh;
+    z-index: 1000;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.admin-sidebar.open {
+    transform: translateX(0);
+}
+
 
             .admin-menu-toggle {
-                display: inline-block;
-            }
+    display: inline-flex;
+}
 
             .admin-topbar {
                 padding: 18px;
@@ -185,6 +226,15 @@
 <div class="admin-layout">
 
     <aside class="admin-sidebar" id="adminSidebar">
+
+
+<button type="button"
+        class="admin-sidebar-close"
+        aria-label="Close navigation menu"
+        onclick="closeAdminSidebar()">
+    &times;
+</button>
+
 
         <div class="admin-brand">
             <h2>MemberHub</h2>
@@ -258,13 +308,16 @@
 
         <div class="admin-topbar">
 
-            <button type="button"
-                    class="admin-menu-toggle"
-                    aria-controls="adminSidebar"
-                    aria-expanded="false"
-                    onclick="toggleAdminSidebar(this)">
-                Menu
-            </button>
+
+<button type="button"
+        class="admin-menu-toggle"
+        aria-label="Toggle navigation menu"
+        aria-controls="adminSidebar"
+        aria-expanded="false"
+        onclick="toggleAdminSidebar(this)">
+    &#9776;
+</button>
+
 
             <h1>@yield('page-title', 'Dashboard')</h1>
 
@@ -288,6 +341,20 @@
 
         button.setAttribute('aria-expanded', String(isOpen));
     }
+
+
+function closeAdminSidebar() {
+    const sidebar = document.getElementById('adminSidebar');
+    const toggleButton = document.querySelector('.admin-menu-toggle');
+
+    sidebar.classList.remove('open');
+
+    if (toggleButton) {
+        toggleButton.setAttribute('aria-expanded', 'false');
+        toggleButton.focus();
+    }
+}
+
 </script>
 
 @stack('scripts')
