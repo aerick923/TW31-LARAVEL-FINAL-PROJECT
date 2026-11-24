@@ -55,4 +55,13 @@ public function tasks(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
         ->withTimestamps();
 }
 
+// A user can submit multiple membership applications.
+public function membershipApplications(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(
+        \App\Models\MembershipApplication::class,
+        'user_id'
+    );
+}
+
 }

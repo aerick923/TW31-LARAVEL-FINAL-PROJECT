@@ -47,8 +47,17 @@ public function membershipLevel(): BelongsTo
     );
 }
 
-    public function member(): BelongsTo
+public function member(): BelongsTo
 {
     return $this->belongsTo(Member::class);
+
+
+}
+
+
+// An application may belong to a registered user account.
+public function user(): BelongsTo
+{
+    return $this->belongsTo(User::class, 'user_id');
 }
 }

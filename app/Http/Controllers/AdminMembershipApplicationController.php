@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
+use App\Models\User;
 
 class AdminMembershipApplicationController extends Controller
 {
@@ -114,6 +115,153 @@ class AdminMembershipApplicationController extends Controller
             )
         );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| DISPLAY ADMINISTRATOR APPLICATION FORM
+|--------------------------------------------------------------------------
+*/
+
+public function create(): View
+{
+    // Retrieve verified regular users who do not already
+    // have a pending or approved membership application.
+    $users = User::query()
+        ->where('role', 'user')
+        ->whereNotNull('email_verified_at')
+        ->whereDoesntHave('membershipApplications', function ($query) {
+            $query->whereIn('status', [
+                'pending',
+                'approved',
+            ]);
+        })
+        ->orderBy('name')
+        ->get();
+
+    // Retrieve active membership categories.
+    $categories = MembershipCategory::query()
+        ->where('is_active', true)
+        ->orderBy('name')
+        ->get();
+
+    // Retrieve membership levels.
+    $levels = MembershipLevel::query()
+        ->orderBy('name')
+        ->get();
+
+    return view('admin.applications.create', compact(
+        'users',
+        'categories',
+        'levels'
+    ));
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| STORE ADMINISTRATOR-CREATED MEMBERSHIP APPLICATION
+|--------------------------------------------------------------------------
+*/
+
+public function store(Request $request): RedirectResponse
+{
+    $validated = $request->validate([
+        'user_id' => [
+            'required',
+            'integer',
+            Rule::exists('users', 'id')
+                ->where('role', 'user')
+                ->whereNotNull('email_verified_at'),
+        ],
+        'membership_category_id' => [
+            'required',
+            'integer',
+            Rule::exists('membership_categories', 'id')
+                ->where('is_active', 1),
+        ],
+        'membership_level_id' => [
+            'required',
+            'integer',
+            Rule::exists('membership_levels', 'id'),
+        ],
+        'full_name' => ['required', 'string', 'max:150'],
+        'phone' => [
+            'required',
+            'string',
+            'regex:/^09[0-9]{9}$/',
+        ],
+        'address' => ['required', 'string', 'max:255'],
+        'latitude' => ['required', 'numeric', 'between:-90,90'],
+        'longitude' => ['required', 'numeric', 'between:-180,180'],
+    ]);
+
+    $application = DB::transaction(function () use ($validated) {
+
+        // Lock the selected user to prevent simultaneous submissions.
+        $user = \App\Models\User::query()
+            ->whereKey($validated['user_id'])
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        // Verify eligibility again inside the transaction.
+        if ($user->role !== 'user' || !$user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'user_id' => 'Please select a verified regular user.',
+            ]);
+        }
+
+        // Prevent duplicate pending or approved applications.
+        if ($user->membershipApplications()
+            ->whereIn('status', ['pending', 'approved'])
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'user_id' =>
+                    'This user already has a pending or approved application.',
+            ]);
+        }
+
+        // Prevent creating an application for an existing member.
+        if (Member::where('email', $user->email)->exists()) {
+            throw ValidationException::withMessages([
+                'user_id' =>
+                    'This user already has a member record.',
+            ]);
+        }
+
+        // Generate a unique application reference.
+        do {
+            $reference = 'MEM-' . Str::upper(Str::random(10));
+        } while (
+            MembershipApplication::where('reference_no', $reference)
+                ->exists()
+        );
+
+        return MembershipApplication::create([
+            'user_id' => $user->id,
+            'member_id' => null,
+            'membership_category_id' =>
+                $validated['membership_category_id'],
+            'membership_level_id' =>
+                $validated['membership_level_id'],
+            'reference_no' => $reference,
+            'full_name' => $validated['full_name'],
+            'email' => $user->email,
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+            'status' => 'pending',
+        ]);
+    });
+
+    return redirect()
+        ->route('admin.applications.index')
+        ->with(
+            'success',
+            "Application recorded successfully! Reference: {$application->reference_no}"
+        );
+}
+
 
     /*
     |--------------------------------------------------------------------------

@@ -392,6 +392,26 @@
 
         <h2>Application Management</h2>
 
+
+<div style="margin: 20px 0;">
+    <a
+        href="{{ route('admin.applications.create') }}"
+        style="
+            display: inline-block;
+            background: #398b6b;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        "
+    >
+        + Record Application
+    </a>
+</div>
+
+
         @if(session('success'))
             <div class="review-alert-success" role="status">
                 {{ session('success') }}

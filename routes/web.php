@@ -218,7 +218,7 @@ Route::patch(
     [UserTaskController::class, 'complete']
 )->name('user.tasks.complete');
 
-    
+
     // User Dashboard
     Route::get('/user/dashboard', function () {
 
@@ -295,7 +295,7 @@ Route::get(
     '/payments',
     [PaymentController::class, 'index']
 )->name('payments.index');
-   
+
     /*
     |--------------------------------------------------------------------------
     | ADMINISTRATOR TASK MANAGEMENT
@@ -339,11 +339,25 @@ Route::get(
     |--------------------------------------------------------------------------
     */
 
+
     // Display and filter membership applications.
     Route::get(
         '/admin/membership-applications',
         [AdminMembershipApplicationController::class, 'index']
     )->name('admin.applications.index');
+
+    // Display the administrator application form.
+    Route::get(
+        '/admin/membership-applications/create',
+        [AdminMembershipApplicationController::class, 'create']
+    )->name('admin.applications.create');
+
+    // Record a membership application.
+    Route::post(
+        '/admin/membership-applications',
+        [AdminMembershipApplicationController::class, 'store']
+    )->middleware('throttle:5,1')
+     ->name('admin.applications.store');
 
     // View an individual membership application.
     Route::get(
@@ -356,6 +370,7 @@ Route::get(
         '/admin/membership-applications/{application}/status',
         [AdminMembershipApplicationController::class, 'updateStatus']
     )->name('admin.applications.update-status');
+
 
 
     /*
