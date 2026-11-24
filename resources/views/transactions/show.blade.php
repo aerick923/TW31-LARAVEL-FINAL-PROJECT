@@ -520,12 +520,12 @@
 
             @endif
 
-            <a href="{{ route('transactions.receipt', $transaction) }}"
-               class="transaction-action-btn transaction-btn-primary"
-               target="_blank"
-               rel="noopener">
-                Print Receipt
-            </a>
+            
+<a href="{{ route('transactions.receipt', $transaction) }}"
+   class="btn">
+    Print Receipt
+</a>
+
 
             <a href="{{ route('transactions.index') }}"
                class="transaction-action-btn transaction-btn-secondary">

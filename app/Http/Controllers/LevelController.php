@@ -71,48 +71,100 @@ class LevelController extends Controller
         return view('levels.edit', compact('level'));
     }
 
-    // Update an existing membership level
-    public function update(Request $request, MembershipLevel $level)
-    {
-        $validated = $request->validate([
-            
-'name' => [
-    'required',
-    'string',
-    'max:255',
-    Rule::in([$level->name]),
-],
+    
+public function update(Request $request, MembershipLevel $level)
+{
+    $validated = $request->validate([
+        'name' => [
+            'required',
+            'string',
+            'max:100',
+            Rule::unique('membership_levels', 'name')
+                ->ignore($level->id),
+        ],
+        'fee' => [
+            'required',
+            'numeric',
+            'min:0',
+            'max:99999999.99',
+        ],
+        'validity_months' => [
+            'required',
+            'integer',
+            'min:1',
+            'max:120',
+        ],
+        'benefits' => [
+            'nullable',
+            'string',
+            'max:5000',
+        ],
+    ]);
 
-            'fee' => [
-                'required',
-                'numeric',
-                'min:0',
-                'max:99999999.99',
-            ],
-            'validity_months' => [
-                'required',
-                'integer',
-                'min:1',
-                'max:120',
-            ],
-            'benefits' => [
-                'nullable',
-                'string',
-                'max:5000',
-            ],
-        ]);
+    $requiredLevels = [
+        'Basic',
+        'Silver',
+        'Gold',
+        'Platinum',
+    ];
 
-        $level->name = $validated['name'];
-        $level->fee = $validated['fee'];
-        $level->validity_months = $validated['validity_months'];
-        $level->benefits = $validated['benefits'] ?? null;
+    $oldName = $level->name;
+    $newName = trim($validated['name']);
 
-        $level->save();
-
-        return redirect()
-            ->route('levels.index')
-            ->with('success', 'Membership level updated successfully!');
+    if (
+        in_array($oldName, $requiredLevels, true)
+        && $oldName !== $newName
+    ) {
+        return back()
+            ->withErrors([
+                'name' =>
+                    'Required membership levels cannot be renamed.',
+            ])
+            ->withInput();
     }
+
+    if (
+        !in_array($oldName, $requiredLevels, true)
+        && in_array($newName, $requiredLevels, true)
+    ) {
+        return back()
+            ->withErrors([
+                'name' =>
+                    'This name is reserved for a required membership level.',
+            ])
+            ->withInput();
+    }
+
+    \Illuminate\Support\Facades\DB::transaction(
+        function () use ($level, $validated, $oldName, $newName) {
+
+            $level->name = $newName;
+            $level->fee = $validated['fee'];
+            $level->validity_months =
+                $validated['validity_months'];
+            $level->benefits =
+                $validated['benefits'] ?? null;
+
+            $level->save();
+
+            if ($oldName !== $newName) {
+                \App\Models\Member::query()
+                    ->where('level', $oldName)
+                    ->update([
+                        'level' => $newName,
+                    ]);
+            }
+        }
+    );
+
+    return redirect()
+        ->route('levels.index')
+        ->with(
+            'success',
+            'Membership level updated successfully!'
+        );
+}
+
 
     // Prevent deleting levels used by members
     
