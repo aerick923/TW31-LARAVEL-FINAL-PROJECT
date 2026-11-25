@@ -95,10 +95,22 @@ class TaskController extends Controller
         DB::transaction(function () use ($task, $validated) {
 
             // Lock the task while updating assignments.
+           
+            // Lock the task while updating assignments.
             $task = Task::whereKey($task->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Prevent changes to completed tasks.
+            if ($task->users()->exists()
+                && !$task->users()
+                    ->wherePivot('completed', false)
+                    ->exists()) {
+
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'task' => 'Completed tasks cannot be edited.',
+                ]);
+            }
             // Update task information.
             $task->update([
                 'task_title' => $validated['task_title'],
